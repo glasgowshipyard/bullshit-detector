@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import logging
 import os
 import requests
@@ -141,10 +141,10 @@ def ask():
         logging.error(f"Error in /ask route: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Root route to prevent 404 errors
+# Root loads UI
 @app.route('/')
 def home():
-    return "Bullshit Detector is running!"
+    return render_template('index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
