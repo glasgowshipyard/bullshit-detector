@@ -45,7 +45,13 @@ def query_model(model_name, prompt):
 
         elif model_name == "claude-3":
             try:
-                headers = {"x-api-key": CLAUDE_API_KEY, "Content-Type": "application/json"}
+                # Add the required anthropic-version header
+                headers = {
+                            "x-api-key": CLAUDE_API_KEY, 
+                            "Content-Type": "application/json",
+                            "anthropic-version": "2023-06-01"  # Use the latest version or the one specified in their docs
+                        }
+        
                 payload = {
                     "model": "claude-3-opus-20240229",
                     "max_tokens": 1000,
