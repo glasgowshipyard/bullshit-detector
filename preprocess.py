@@ -45,8 +45,8 @@ def preprocess_query(query):
 
     words = query.split()
 
-    # Explicitly lemmatize words as verbs to avoid incorrect truncation
-    words = [lemmatizer.lemmatize(word.lower(), pos="v") for word in words]
+    # Explicitly prevent "was" → "be" conversion
+    words = [word if word in ["was", "were"] else lemmatizer.lemmatize(word.lower(), pos="v") for word in words]
     logging.debug(f"After lemmatization: {' '.join(words)}")
 
     structured_query = f"This is a Bullshit Detector request for a TRUE or FALSE response: {' '.join(words)}"
