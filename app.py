@@ -55,11 +55,13 @@ def query_model(model_name, prompt):
             response = requests.post(endpoint, json=payload, headers=headers)
             response_json = response.json()
 
+            logging.debug(f"Claude API raw response: {response_json}")  # **Log full response**
+
             return {
-                "success": True,
-                "content": response_json["content"][0]["text"],
+                "success": True if "content" in response_json else False,
+                "content": response_json.get("content", "Missing 'content' field"),
                 "model": "claude-3",
-                "error": None
+                "error": None if "content" in response_json else "'content' key missing"
             }
 
         else:
