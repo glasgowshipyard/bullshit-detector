@@ -1,10 +1,7 @@
-from flask import Flask, request, jsonify
 import re
+import logging
 import nltk
 from nltk.stem import WordNetLemmatizer
-
-# Initialize Flask app
-app = Flask(__name__)
 
 # Initialize NLP tools
 nltk.download('wordnet')
@@ -31,32 +28,25 @@ synonym_map = {
 
 # Function to preprocess query
 def preprocess_query(query):
+    logging.debug(f"Original query: {query}")
+
+    # Apply sanitization steps (keep logging each step)
     query = query.strip()
-    
-    # Remove leading phrases that introduce bias
+    logging.debug(f"After stripping: {query}")
+
     for pattern in removal_phrases:
         query = re.sub(pattern, "", query, flags=re.IGNORECASE)
-    
-    # Replace synonyms with canonical terms
+    logging.debug(f"After phrase removal: {query}")
+
     for word, replacement in synonym_map.items():
         query = re.sub(rf"\b{word}\b", replacement, query, flags=re.IGNORECASE)
-    
-    # Tokenize and lemmatize
+    logging.debug(f"After synonym replacement: {query}")
+
     words = query.split()
-    words = [lemmatizer.lemmatize(word.lower()) for word in words]
-    query = " ".join(words)
-    
-    # Ensure query follows the standard format
-    structured_query = f"This is a Bullshit Detector request for a TRUE or FALSE response: {query}"
-    
+    words = [lemmatizer.lemmatize(word.lower()) for word in words]  # Lemmatisation step
+    logging.debug(f"After lemmatization: {' '.join(words)}")
+
+    structured_query = f"This is a Bullshit Detector request for a TRUE or FALSE response: {' '.join(words)}"
+    logging.debug(f"Final structured query: {structured_query}")
+
     return structured_query
-
-@app.route('/preprocess', methods=['POST'])
-def preprocess():
-    data = request.json
-    raw_query = data.get("query", "").strip()
-    processed_query = preprocess_query(raw_query)
-    return jsonify({"structured_query": processed_query})
-
-if __name__ == '__main__':
-    app.run(debug=True)
