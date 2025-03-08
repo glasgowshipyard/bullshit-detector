@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-from preprocess import preprocess_query  # Import the preprocessing function
-import requests
-import os
 import logging
+import os
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
+# Check if preprocess module imports correctly
 try:
     from preprocess import preprocess_query
     logging.debug("Successfully imported preprocess module.")
@@ -21,6 +21,11 @@ app = Flask(__name__)
 # Load API keys from environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
+
+# Root route to prevent 404 errors
+@app.route('/')
+def home():
+    return "Bullshit Detector is running!"
 
 # Function to query OpenAI's GPT-4o
 
@@ -60,4 +65,5 @@ def ask():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
