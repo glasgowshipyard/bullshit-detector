@@ -16,7 +16,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
-# DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Uncomment when you have the API key
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 # Function to query different AI models
 def query_model(model_name, prompt):
@@ -123,32 +123,32 @@ def query_model(model_name, prompt):
                 logging.error(f"Error in Mistral API request: {str(e)}")
                 return {"success": False, "content": None, "model": "mistral", "error": str(e)}
         
-        # elif model_name == "deepseek":
-        #     try:
-        #         headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-        #         payload = {
-        #             "model": "deepseek-chat",
-        #             "messages": [{"role": "user", "content": prompt}],
-        #             "temperature": 0.1
-        #         }
-        #         endpoint = "https://api.deepseek.com/v1/chat/completions"
-        #         
-        #         logging.debug(f"Sending to DeepSeek API: endpoint={endpoint}")
-        #         
-        #         response = requests.post(endpoint, json=payload, headers=headers)
-        #         logging.debug(f"DeepSeek API status code: {response.status_code}")
-        #         
-        #         response_json = response.json()
-        #         
-        #         return {
-        #             "success": True,
-        #             "content": response_json["choices"][0]["message"]["content"],
-        #             "model": "deepseek",
-        #             "error": None
-        #         }
-        #     except Exception as e:
-        #         logging.error(f"Error in DeepSeek API request: {str(e)}")
-        #         return {"success": False, "content": None, "model": "deepseek", "error": str(e)}
+        elif model_name == "deepseek":
+            try:
+                headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "deepseek-chat",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1
+                }
+                endpoint = "https://api.deepseek.com/v1/chat/completions"
+                
+                logging.debug(f"Sending to DeepSeek API: endpoint={endpoint}")
+                
+                response = requests.post(endpoint, json=payload, headers=headers)
+                logging.debug(f"DeepSeek API status code: {response.status_code}")
+                
+                response_json = response.json()
+                
+                return {
+                    "success": True,
+                    "content": response_json["choices"][0]["message"]["content"],
+                    "model": "deepseek",
+                    "error": None
+                }
+            except Exception as e:
+                logging.error(f"Error in DeepSeek API request: {str(e)}")
+                return {"success": False, "content": None, "model": "deepseek", "error": str(e)}
 
         else:
             return {
@@ -320,7 +320,7 @@ def ask():
         responses["gpt-4o"] = query_model("gpt-4o", structured_query)
         responses["claude-3"] = query_model("claude-3", structured_query)
         responses["mistral"] = query_model("mistral", structured_query)
-        # responses["deepseek"] = query_model("deepseek", structured_query)  # Uncomment when DeepSeek API is available
+        responses["deepseek"] = query_model("deepseek", structured_query)
         
         # Analyze responses to determine verdict and confidence
         analysis = analyze_responses(responses)
