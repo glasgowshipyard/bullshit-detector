@@ -3,6 +3,7 @@ import logging
 import os
 import requests
 import json
+import re
 from preprocess import preprocess_query
 
 # Configure logging
@@ -17,6 +18,23 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+
+# Function to strip markdown formatting
+def strip_markdown(text):
+    """Remove common markdown formatting from text"""
+    if not text:
+        return text
+        
+    # Remove bold/italic formatting
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.*?)\*', r'\1', text)
+    # Remove headers
+    text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
+    # Remove code blocks
+    text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+    # Remove inline code
+    text = re.sub(r'`(.*?)`', r'\1', text)
+    return text
 
 # Function to query different AI models
 def query_model(model_name, prompt):
@@ -140,9 +158,13 @@ def query_model(model_name, prompt):
                 
                 response_json = response.json()
                 
+                # Get content and strip markdown formatting
+                content = response_json["choices"][0]["message"]["content"]
+                content = strip_markdown(content)  # Strip markdown for consistency with other models
+                
                 return {
                     "success": True,
-                    "content": response_json["choices"][0]["message"]["content"],
+                    "content": content,
                     "model": "deepseek",
                     "error": None
                 }
