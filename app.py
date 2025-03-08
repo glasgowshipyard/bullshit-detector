@@ -170,7 +170,8 @@ def query_model(model_name, prompt):
 # Function to analyze model responses and calculate confidence
 def analyze_responses(responses):
     """
-    Analyze responses from multiple models to determine verdict and confidence
+    Analyze responses from multiple models to determine verdict and confidence,
+    accounting for policy-based hesitations that shouldn't reduce confidence.
     
     Args:
         responses (dict): Dictionary of model responses
@@ -180,15 +181,50 @@ def analyze_responses(responses):
     """
     # Extract TRUE/FALSE judgments from each model
     judgments = {}
+    policy_limited_responses = []
+    
+    # Policy hesitation patterns that indicate reluctance but not factual uncertainty
+    policy_patterns = [
+        "I apologize", "I do not feel comfortable", "I would suggest referring to",
+        "I cannot speculate", "not appropriate to discuss", "recommend consulting",
+        "would advise looking at", "suggest referring to factual information",
+        "it's important to rely on", "please consult official sources"
+    ]
+    
     for model, response in responses.items():
-        if response["success"] and response["content"]:
-            content = response["content"].upper()
-            if "FALSE" in content and not ("NOT FALSE" in content or "ISN'T FALSE" in content):
+        if not (response["success"] and response["content"]):
+            continue
+            
+        content = response["content"].upper()
+        text = response["content"]
+        
+        # Check if response appears to be policy-limited rather than factually uncertain
+        policy_limited = any(pattern.lower() in text.lower() for pattern in policy_patterns)
+        
+        # Even with policy limitations, try to extract the implied judgment
+        if "FALSE" in content and not ("NOT FALSE" in content or "ISN'T FALSE" in content):
+            judgments[model] = "FALSE"
+        elif "TRUE" in content and not ("NOT TRUE" in content or "ISN'T TRUE" in content):
+            judgments[model] = "TRUE"
+        elif policy_limited:
+            # Look for implicit judgments in policy-limited responses
+            if any(phrase.lower() in text.lower() for phrase in [
+                "not supported by evidence", "debunked", "lack credible evidence",
+                "conspiracy theory", "no credible evidence", "rejected by experts"
+            ]):
                 judgments[model] = "FALSE"
-            elif "TRUE" in content and not ("NOT TRUE" in content or "ISN'T TRUE" in content):
+                policy_limited_responses.append(model)
+            elif any(phrase.lower() in text.lower() for phrase in [
+                "supported by evidence", "confirmed by", "verified by", "evidence shows",
+                "research indicates", "studies confirm"
+            ]):
                 judgments[model] = "TRUE"
+                policy_limited_responses.append(model)
             else:
                 judgments[model] = "UNCERTAIN"
+                policy_limited_responses.append(model)
+        else:
+            judgments[model] = "UNCERTAIN"
     
     # Count different judgments
     judgment_counts = {"TRUE": 0, "FALSE": 0, "UNCERTAIN": 0}
@@ -204,18 +240,40 @@ def analyze_responses(responses):
     
     # Calculate confidence percentage
     total_models = sum(1 for response in responses.values() if response["success"])
+    
     if total_models == 0:
         confidence = 0
     else:
-        # Base confidence on agreement percentage
+        # Calculate effective agreement (non-policy-limited models + agreeing policy-limited models)
         agreement_count = judgment_counts[majority_verdict]
-        confidence = (agreement_count / total_models) * 100
         
-        # Adjust confidence based on UNCERTAIN judgments
+        # Boost confidence when policy-limited responses actually align with majority verdict
+        policy_aligned = sum(1 for model in policy_limited_responses if model in judgments and judgments[model] == majority_verdict)
+        non_policy_total = total_models - len(policy_limited_responses)
+        
+        if non_policy_total > 0:
+            # Give more weight to direct, non-policy-limited responses
+            base_confidence = ((agreement_count - policy_aligned) / non_policy_total) * 100
+            
+            # Add bonus for policy-limited responses that still align with majority
+            policy_bonus = (policy_aligned / total_models) * 20  # 20% max bonus
+            
+            confidence = min(100, base_confidence + policy_bonus)
+        else:
+            # If all responses are policy-limited, just use agreement percentage
+            confidence = (agreement_count / total_models) * 90  # Cap at 90% if all are policy-limited
+        
+        # Adjust confidence based on UNCERTAIN judgments that aren't policy-limited
+        uncertain_non_policy = sum(1 for model in judgments 
+                                 if model not in policy_limited_responses 
+                                 and judgments[model] == "UNCERTAIN")
+        
+        if uncertain_non_policy > 0:
+            confidence = max(50, confidence - (uncertain_non_policy * 15))
+        
+        # Special case: If majority verdict is UNCERTAIN, cap confidence
         if majority_verdict == "UNCERTAIN":
-            confidence = max(30, confidence)  # Cap minimum at 30%
-        elif judgment_counts["UNCERTAIN"] > 0:
-            confidence = max(50, confidence - (judgment_counts["UNCERTAIN"] * 10))
+            confidence = min(50, confidence)
     
     # Determine confidence level text
     if confidence >= 90:
@@ -233,7 +291,8 @@ def analyze_responses(responses):
         "verdict": majority_verdict,
         "confidence_percentage": round(confidence),
         "confidence_level": confidence_level,
-        "model_judgments": judgments
+        "model_judgments": judgments,
+        "policy_limited_responses": policy_limited_responses
     }
 
 @app.route('/ask', methods=['POST'])
