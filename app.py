@@ -44,25 +44,48 @@ def query_model(model_name, prompt):
             }
         
         elif model_name == "claude-3":
-            headers = {"x-api-key": CLAUDE_API_KEY, "Content-Type": "application/json"}
-            payload = {
-                "model": "claude-3-opus-20240229",
-                "max_tokens": 1000,
-                "messages": [{"role": "user", "content": prompt}]
-            }
-            endpoint = "https://api.anthropic.com/v1/messages"
+    try:
+        headers = {"x-api-key": CLAUDE_API_KEY, "Content-Type": "application/json"}
+        payload = {
+            "model": "claude-3-opus-20240229",
+            "max_tokens": 1000,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        endpoint = "https://api.anthropic.com/v1/messages"
 
-            response = requests.post(endpoint, json=payload, headers=headers)
+        # Log what we're sending
+        logging.debug(f"Sending to Claude API: endpoint={endpoint}, payload={payload}")
+        
+        response = requests.post(endpoint, json=payload, headers=headers)
+
+        # Log response metadata
+        logging.debug(f"Claude API status code: {response.status_code}")
+        logging.debug(f"Claude API response headers: {response.headers}")
+
+        try:
             response_json = response.json()
+            logging.debug(f"Claude API response body: {response_json}")
 
-            logging.debug(f"Claude API raw response: {response_json}")  # **Log full response**
+            # Check for alternative response structures
+            if "content" in response_json and isinstance(response_json["content"], list):
+                content = response_json["content"][0]["text"]
+                return {"success": True, "content": content, "model": "claude-3", "error": None}
+            elif "message" in response_json:
+                return {"success": True, "content": str(response_json["message"]), "model": "claude-3", "error": None}
+            else:
+                return {
+                    "success": False,
+                    "content": str(response_json)[:200] + "...",
+                    "model": "claude-3",
+                    "error": "Could not locate content in response"
+                }
+        except ValueError as e:
+            logging.error(f"Claude API returned non-JSON response: {response.text[:200]}...")
+            return {"success": False, "content": None, "model": "claude-3", "error": f"Non-JSON response: {str(e)}"}
+    except Exception as e:
+        logging.error(f"Error in Claude API request: {str(e)}")
+        return {"success": False, "content": None, "model": "claude-3", "error": str(e)}
 
-            return {
-                "success": True if "content" in response_json else False,
-                "content": response_json.get("content", "Missing 'content' field"),
-                "model": "claude-3",
-                "error": None if "content" in response_json else "'content' key missing"
-            }
 
         else:
             return {
