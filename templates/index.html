@@ -91,11 +91,7 @@
             border-left-color: #8b5cf6;
         }
         
-        .model-mistral {
-            border-left-color: #3b82f6;
-        }
-        
-        .model-deepseek {
+        .model-gemini {
             border-left-color: #f59e0b;
         }
         
@@ -127,11 +123,6 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-        
-        .flag-emoji {
-            font-size: 1.2em;
-            margin-right: 8px;
         }
     </style>
 </head>
@@ -181,7 +172,7 @@
                             <div id="verdict-badge" class="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-medium mr-3">
                                 FALSE
                             </div>
-                            <div class="text-sm text-gray-400" id="confidence-text">High Confidence</div>
+                            <div class="text-sm text-gray-400">Confidence:</div>
                         </div>
                     </div>
                     <div class="mt-4 md:mt-0 w-full md:w-1/3">
@@ -203,16 +194,13 @@
                             <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center mr-3">
                                 <i class="fas fa-robot text-white"></i>
                             </div>
-                            <div class="flex items-center">
-                                <span class="flag-emoji">🇺🇸</span>
-                                <div>
-                                    <h3 class="font-medium">GPT-4o</h3>
-                                    <div class="text-xs text-gray-400">OpenAI</div>
-                                </div>
+                            <div>
+                                <h3 class="font-medium">GPT-4o</h3>
+                                <div class="text-xs text-gray-400">OpenAI</div>
                             </div>
                         </div>
                         <p id="gpt-response" class="text-gray-300">
-                            Loading response...
+                            FALSE. The moon landing was not faked. The Apollo missions, conducted by NASA, successfully landed astronauts on the moon six times between 1969 and 1972. These missions have been extensively documented and verified by scientists and experts worldwide.
                         </p>
                     </div>
                     
@@ -222,54 +210,13 @@
                             <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center mr-3">
                                 <i class="fas fa-robot text-white"></i>
                             </div>
-                            <div class="flex items-center">
-                                <span class="flag-emoji">🇺🇸</span>
-                                <div>
-                                    <h3 class="font-medium">Claude 3</h3>
-                                    <div class="text-xs text-gray-400">Anthropic</div>
-                                </div>
+                            <div>
+                                <h3 class="font-medium">Claude 3</h3>
+                                <div class="text-xs text-gray-400">Anthropic</div>
                             </div>
                         </div>
                         <p id="claude-response" class="text-gray-300">
-                            Loading response...
-                        </p>
-                    </div>
-                    
-                    <!-- Mistral Response -->
-                    <div class="model-response model-mistral bg-gray-800 bg-opacity-50 rounded-lg p-4">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center mr-3">
-                                <i class="fas fa-robot text-white"></i>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="flag-emoji">🇫🇷</span>
-                                <div>
-                                    <h3 class="font-medium">Mistral</h3>
-                                    <div class="text-xs text-gray-400">Mistral AI</div>
-                                </div>
-                            </div>
-                        </div>
-                        <p id="mistral-response" class="text-gray-300">
-                            Loading response...
-                        </p>
-                    </div>
-                    
-                    <!-- DeepSeek Response -->
-                    <div class="model-response model-deepseek bg-gray-800 bg-opacity-50 rounded-lg p-4 hidden">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center mr-3">
-                                <i class="fas fa-robot text-white"></i>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="flag-emoji">🇨🇳</span>
-                                <div>
-                                    <h3 class="font-medium">DeepSeek</h3>
-                                    <div class="text-xs text-gray-400">DeepSeek AI</div>
-                                </div>
-                            </div>
-                        </div>
-                        <p id="deepseek-response" class="text-gray-300">
-                            Loading response...
+                            FALSE. The Apollo 11 mission successfully landed on the moon on July 20, 1969. There is overwhelming evidence that confirms the moon landings were real events and not faked.
                         </p>
                     </div>
                 </div>
@@ -309,18 +256,8 @@
             const claimText = document.getElementById('claim-text');
             const gptResponse = document.getElementById('gpt-response');
             const claudeResponse = document.getElementById('claude-response');
-            const mistralResponse = document.getElementById('mistral-response');
-            const deepseekResponse = document.getElementById('deepseek-response');
-            
-            // Get model containers
-            const gptContainer = document.querySelector('.model-openai');
-            const claudeContainer = document.querySelector('.model-claude');
-            const mistralContainer = document.querySelector('.model-mistral');
-            const deepseekContainer = document.querySelector('.model-deepseek');
-            
             const verdictBadge = document.getElementById('verdict-badge');
             const confidenceLevel = document.getElementById('confidence-level');
-            const confidenceText = document.getElementById('confidence-text');
             
             queryForm.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -331,12 +268,6 @@
                 // Show loading
                 resultsSection.classList.add('hidden');
                 loadingSection.classList.remove('hidden');
-                
-                // Reset responses and hide all model containers initially
-                gptContainer.classList.add('hidden');
-                claudeContainer.classList.add('hidden');
-                mistralContainer.classList.add('hidden');
-                deepseekContainer.classList.add('hidden');
                 
                 // Make API request
                 fetch('/ask', {
@@ -351,39 +282,66 @@
                     // Update UI with results
                     claimText.textContent = data.query;
                     
-                    // Only show models with successful responses
-                    if (data.responses['gpt-4o'] && data.responses['gpt-4o'].success) {
-                        gptContainer.classList.remove('hidden');
+                    // Update model responses
+                    if (data.responses['gpt-4o'].success) {
                         gptResponse.textContent = data.responses['gpt-4o'].content;
-                        gptResponse.classList.remove('text-red-400');
-                    }
-                    
-                    if (data.responses['claude-3'] && data.responses['claude-3'].success) {
-                        claudeContainer.classList.remove('hidden');
-                        claudeResponse.textContent = data.responses['claude-3'].content;
-                        claudeResponse.classList.remove('text-red-400');
-                    }
-                    
-                    if (data.responses['mistral'] && data.responses['mistral'].success) {
-                        mistralContainer.classList.remove('hidden');
-                        mistralResponse.textContent = data.responses['mistral'].content;
-                        mistralResponse.classList.remove('text-red-400');
-                    }
-                    
-                    // Handle DeepSeek if available
-                    if (data.responses['deepseek'] && data.responses['deepseek'].success) {
-                        deepseekContainer.classList.remove('hidden');
-                        deepseekResponse.textContent = data.responses['deepseek'].content;
-                        deepseekResponse.classList.remove('text-red-400');
-                    }
-                    
-                    // Use the analysis data if available, otherwise calculate it client-side
-                    if (data.analysis) {
-                        updateVerdict(data.analysis);
                     } else {
-                        // Fallback to client-side analysis (for backward compatibility)
-                        analyzeClientSide(data.responses);
+                        gptResponse.textContent = 'Error retrieving response.';
+                        gptResponse.classList.add('text-red-400');
                     }
+                    
+                    if (data.responses['claude-3'].success) {
+                        claudeResponse.textContent = data.responses['claude-3'].content;
+                    } else {
+                        claudeResponse.textContent = 'Error retrieving response.';
+                        claudeResponse.classList.add('text-red-400');
+                    }
+                    
+                    // Determine verdict (simplified version)
+                    const gptText = data.responses['gpt-4o'].content || '';
+                    const claudeText = data.responses['claude-3'].content || '';
+                    
+                    let verdict = 'UNCERTAIN';
+                    let confidenceWidth = '50%';
+                    let confidenceClass = 'truth-medium';
+                    
+                    // Simple check for TRUE/FALSE in both responses
+                    const gptTrue = gptText.toUpperCase().includes('TRUE') && !gptText.toUpperCase().includes('FALSE');
+                    const gptFalse = gptText.toUpperCase().includes('FALSE');
+                    const claudeTrue = claudeText.toUpperCase().includes('TRUE') && !claudeText.toUpperCase().includes('FALSE');
+                    const claudeFalse = claudeText.toUpperCase().includes('FALSE');
+                    
+                    if ((gptTrue && claudeTrue) || (gptFalse && claudeFalse)) {
+                        // Agreement
+                        verdict = gptTrue ? 'TRUE' : 'FALSE';
+                        confidenceWidth = '95%';
+                        confidenceClass = verdict === 'TRUE' ? 'truth-high' : 'truth-high';
+                    } else if (gptTrue || claudeTrue) {
+                        // Some evidence of truth
+                        verdict = 'POSSIBLY TRUE';
+                        confidenceWidth = '60%';
+                        confidenceClass = 'truth-medium';
+                    } else if (gptFalse || claudeFalse) {
+                        // Some evidence of falsehood
+                        verdict = 'LIKELY FALSE';
+                        confidenceWidth = '75%';
+                        confidenceClass = 'truth-medium';
+                    }
+                    
+                    // Update UI with verdict
+                    verdictBadge.textContent = verdict;
+                    
+                    // Update badge color
+                    verdictBadge.className = 'px-3 py-1 rounded-full text-white text-sm font-medium mr-3';
+                    if (verdict === 'TRUE' || verdict === 'FALSE') {
+                        verdictBadge.classList.add(verdict === 'TRUE' ? 'bg-green-500' : 'bg-red-500');
+                    } else {
+                        verdictBadge.classList.add('bg-yellow-500');
+                    }
+                    
+                    // Update confidence bar
+                    confidenceLevel.style.width = confidenceWidth;
+                    confidenceLevel.className = 'confidence-level ' + confidenceClass;
                     
                     // Show results
                     loadingSection.classList.add('hidden');
@@ -395,88 +353,6 @@
                     alert('An error occurred while processing your request.');
                 });
             });
-            
-            function updateVerdict(analysis) {
-                // Update verdict badge
-                verdictBadge.textContent = analysis.verdict;
-                
-                // Update badge color
-                verdictBadge.className = 'px-3 py-1 rounded-full text-white text-sm font-medium mr-3';
-                if (analysis.verdict === 'TRUE') {
-                    verdictBadge.classList.add('bg-green-500');
-                } else if (analysis.verdict === 'FALSE') {
-                    verdictBadge.classList.add('bg-red-500');
-                } else {
-                    verdictBadge.classList.add('bg-yellow-500');
-                }
-                
-                // Update confidence text
-                confidenceText.textContent = analysis.confidence_level + ' Confidence';
-                
-                // Update confidence bar
-                confidenceLevel.style.width = analysis.confidence_percentage + '%';
-                
-                // Update confidence bar color
-                confidenceLevel.className = 'confidence-level';
-                if (analysis.confidence_percentage >= 70) {
-                    confidenceLevel.classList.add('truth-high');
-                } else if (analysis.confidence_percentage >= 40) {
-                    confidenceLevel.classList.add('truth-medium');
-                } else {
-                    confidenceLevel.classList.add('truth-low');
-                }
-            }
-            
-            function analyzeClientSide(responses) {
-                // Fallback for older API responses
-                // Simple check for TRUE/FALSE in content
-                let trueCount = 0;
-                let falseCount = 0;
-                let totalValid = 0;
-                
-                for (const model in responses) {
-                    if (responses[model].success && responses[model].content) {
-                        totalValid++;
-                        const content = responses[model].content.toUpperCase();
-                        if (content.includes('TRUE') && !content.includes('FALSE')) {
-                            trueCount++;
-                        } else if (content.includes('FALSE')) {
-                            falseCount++;
-                        }
-                    }
-                }
-                
-                // Determine verdict
-                let verdict = 'UNCERTAIN';
-                if (trueCount > falseCount) {
-                    verdict = 'TRUE';
-                } else if (falseCount > trueCount) {
-                    verdict = 'FALSE';
-                }
-                
-                // Calculate confidence
-                let confidence = 0;
-                if (totalValid > 0) {
-                    confidence = Math.round((Math.max(trueCount, falseCount) / totalValid) * 100);
-                }
-                
-                // Determine confidence level
-                let confidenceLevelText = 'Low';
-                if (confidence >= 90) {
-                    confidenceLevelText = 'Very High';
-                } else if (confidence >= 70) {
-                    confidenceLevelText = 'High';
-                } else if (confidence >= 50) {
-                    confidenceLevelText = 'Medium';
-                }
-                
-                // Update UI
-                updateVerdict({
-                    verdict: verdict,
-                    confidence_percentage: confidence,
-                    confidence_level: confidenceLevelText
-                });
-            }
             
             newQueryBtn.addEventListener('click', function() {
                 resultsSection.classList.add('hidden');

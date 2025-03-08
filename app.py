@@ -193,7 +193,7 @@ def query_model(model_name, prompt):
 def analyze_responses(responses):
     """
     Analyze responses from multiple models to determine verdict and confidence,
-    accounting for policy-based hesitations that shouldn't reduce confidence.
+    accounting for policy-based hesitations and uncertainty
     
     Args:
         responses (dict): Dictionary of model responses
@@ -201,9 +201,10 @@ def analyze_responses(responses):
     Returns:
         dict: Analysis results with verdict and confidence
     """
-    # Extract TRUE/FALSE judgments from each model
+    # Extract TRUE/FALSE/UNCERTAIN judgments from each model
     judgments = {}
     policy_limited_responses = []
+    uncertain_responses = []
     
     # Policy hesitation patterns that indicate reluctance but not factual uncertainty
     policy_patterns = [
@@ -213,30 +214,52 @@ def analyze_responses(responses):
         "it's important to rely on", "please consult official sources"
     ]
     
+    # Uncertainty patterns that indicate factual uncertainty rather than policy limits
+    uncertainty_patterns = [
+        "cannot be definitively answered", "complex issue", "not enough evidence",
+        "remains disputed", "difficult to determine", "would require more information",
+        "cannot be answered with a simple", "insufficient evidence", "uncertain",
+        "depends on", "ambiguous", "unclear", "debated", "controversial"
+    ]
+    
     for model, response in responses.items():
         if not (response["success"] and response["content"]):
             continue
             
         content = response["content"].upper()
-        text = response["content"]
+        text = response["content"].lower()
+        
+        # Check for uncertainty indicators
+        uncertain = any(pattern in text for pattern in uncertainty_patterns)
         
         # Check if response appears to be policy-limited rather than factually uncertain
-        policy_limited = any(pattern.lower() in text.lower() for pattern in policy_patterns)
+        policy_limited = any(pattern in text for pattern in policy_patterns)
         
-        # Even with policy limitations, try to extract the implied judgment
+        # Extract explicit judgments
         if "FALSE" in content and not ("NOT FALSE" in content or "ISN'T FALSE" in content):
-            judgments[model] = "FALSE"
+            if uncertain:
+                judgments[model] = "UNCERTAIN"
+                uncertain_responses.append(model)
+            else:
+                judgments[model] = "FALSE"
         elif "TRUE" in content and not ("NOT TRUE" in content or "ISN'T TRUE" in content):
-            judgments[model] = "TRUE"
+            if uncertain:
+                judgments[model] = "UNCERTAIN"
+                uncertain_responses.append(model)
+            else:
+                judgments[model] = "TRUE"
+        elif "UNCERTAIN" in content or uncertain:
+            judgments[model] = "UNCERTAIN"
+            uncertain_responses.append(model)
         elif policy_limited:
             # Look for implicit judgments in policy-limited responses
-            if any(phrase.lower() in text.lower() for phrase in [
+            if any(phrase in text for phrase in [
                 "not supported by evidence", "debunked", "lack credible evidence",
                 "conspiracy theory", "no credible evidence", "rejected by experts"
             ]):
                 judgments[model] = "FALSE"
                 policy_limited_responses.append(model)
-            elif any(phrase.lower() in text.lower() for phrase in [
+            elif any(phrase in text for phrase in [
                 "supported by evidence", "confirmed by", "verified by", "evidence shows",
                 "research indicates", "studies confirm"
             ]):
@@ -247,6 +270,7 @@ def analyze_responses(responses):
                 policy_limited_responses.append(model)
         else:
             judgments[model] = "UNCERTAIN"
+            uncertain_responses.append(model)
     
     # Count different judgments
     judgment_counts = {"TRUE": 0, "FALSE": 0, "UNCERTAIN": 0}
@@ -254,48 +278,58 @@ def analyze_responses(responses):
         judgment_counts[judgment] += 1
     
     # Determine the majority verdict
-    majority_verdict = max(judgment_counts, key=judgment_counts.get)
+    # If UNCERTAIN count is significant (1/3 or more), prioritize it
+    total_models = len(judgments)
+    if judgment_counts["UNCERTAIN"] >= (total_models / 3) or judgment_counts["UNCERTAIN"] >= 2:
+        majority_verdict = "UNCERTAIN"
+    else:
+        # Otherwise use the most common verdict
+        majority_verdict = max(
+            ("TRUE", judgment_counts["TRUE"]), 
+            ("FALSE", judgment_counts["FALSE"]),
+            ("UNCERTAIN", judgment_counts["UNCERTAIN"]),
+            key=lambda x: x[1]
+        )[0]
     
     # If there's a tie between TRUE and FALSE, use UNCERTAIN
     if judgment_counts["TRUE"] == judgment_counts["FALSE"] and judgment_counts["TRUE"] > 0:
         majority_verdict = "UNCERTAIN"
     
     # Calculate confidence percentage
-    total_models = sum(1 for response in responses.values() if response["success"])
-    
     if total_models == 0:
         confidence = 0
     else:
         # Calculate effective agreement (non-policy-limited models + agreeing policy-limited models)
         agreement_count = judgment_counts[majority_verdict]
         
-        # Boost confidence when policy-limited responses actually align with majority verdict
-        policy_aligned = sum(1 for model in policy_limited_responses if model in judgments and judgments[model] == majority_verdict)
-        non_policy_total = total_models - len(policy_limited_responses)
-        
-        if non_policy_total > 0:
-            # Give more weight to direct, non-policy-limited responses
-            base_confidence = ((agreement_count - policy_aligned) / non_policy_total) * 100
-            
-            # Add bonus for policy-limited responses that still align with majority
-            policy_bonus = (policy_aligned / total_models) * 20  # 20% max bonus
-            
-            confidence = min(100, base_confidence + policy_bonus)
-        else:
-            # If all responses are policy-limited, just use agreement percentage
-            confidence = (agreement_count / total_models) * 90  # Cap at 90% if all are policy-limited
-        
-        # Adjust confidence based on UNCERTAIN judgments that aren't policy-limited
-        uncertain_non_policy = sum(1 for model in judgments 
-                                 if model not in policy_limited_responses 
-                                 and judgments[model] == "UNCERTAIN")
-        
-        if uncertain_non_policy > 0:
-            confidence = max(50, confidence - (uncertain_non_policy * 15))
-        
-        # Special case: If majority verdict is UNCERTAIN, cap confidence
+        # If verdict is UNCERTAIN, confidence is based on uncertainty agreement
         if majority_verdict == "UNCERTAIN":
-            confidence = min(50, confidence)
+            # Cap confidence for UNCERTAIN verdicts
+            confidence = min(70, (agreement_count / total_models) * 100)
+        else:
+            # For TRUE/FALSE verdicts
+            policy_aligned = sum(1 for model in policy_limited_responses 
+                               if model in judgments and judgments[model] == majority_verdict)
+            
+            # Calculate effective non-policy models
+            non_policy_total = total_models - len(policy_limited_responses)
+            
+            if non_policy_total > 0:
+                # Give more weight to direct, non-policy-limited responses
+                base_confidence = ((agreement_count - policy_aligned) / non_policy_total) * 100
+                
+                # Add bonus for policy-limited responses that still align with majority
+                policy_bonus = (policy_aligned / total_models) * 20  # 20% max bonus
+                
+                confidence = min(100, base_confidence + policy_bonus)
+            else:
+                # If all responses are policy-limited, just use agreement percentage
+                confidence = (agreement_count / total_models) * 90  # Cap at 90% if all are policy-limited
+            
+            # Reduce confidence if there are uncertain responses
+            if judgment_counts["UNCERTAIN"] > 0:
+                uncertainty_penalty = (judgment_counts["UNCERTAIN"] / total_models) * 30
+                confidence = max(40, confidence - uncertainty_penalty)
     
     # Determine confidence level text
     if confidence >= 90:
@@ -314,7 +348,8 @@ def analyze_responses(responses):
         "confidence_percentage": round(confidence),
         "confidence_level": confidence_level,
         "model_judgments": judgments,
-        "policy_limited_responses": policy_limited_responses
+        "policy_limited_responses": policy_limited_responses,
+        "uncertain_responses": uncertain_responses
     }
 
 @app.route('/ask', methods=['POST'])
@@ -363,5 +398,32 @@ def home():
     return render_template('index.html')
 
 if __name__ == '__main__':
+    # Create static directory if it doesn't exist
+    os.makedirs("static", exist_ok=True)
+    
+    # Create initial model metadata file if it doesn't exist
+    metadata_file = os.path.join("static", "model_metadata.json")
+    if not os.path.exists(metadata_file):
+        initial_metadata = {
+            "last_updated": "2025-03-08",
+            "models": {
+                "gpt-4o": {"name": "GPT-4o", "provider": "OpenAI", "training_cutoff": "April 2023"},
+                "claude-3": {"name": "Claude 3 Opus", "provider": "Anthropic", "training_cutoff": "August 2023"},
+                "mistral": {"name": "Mistral Large", "provider": "Mistral AI", "training_cutoff": "December 2023"},
+                "deepseek": {"name": "DeepSeek Chat", "provider": "DeepSeek AI", "training_cutoff": "January 2023"}
+            }
+        }
+        with open(metadata_file, 'w') as f:
+            json.dump(initial_metadata, f, indent=2)
+    
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+@app.route('/metadata', methods=['GET'])
+def get_model_metadata():
+    try:
+        with open("metadata/model_metadata.json", "r") as f:
+            metadata = json.load(f)
+        return jsonify(metadata)
+    except FileNotFoundError:
+        return jsonify({"error": "Metadata file not found"}), 404
