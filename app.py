@@ -2,18 +2,7 @@ from flask import Flask, request, jsonify
 import logging
 import os
 import requests
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Check if preprocess module imports correctly
-try:
-    from preprocess import preprocess_query
-    logging.debug("Successfully imported preprocess module.")
-except ImportError as e:
-    logging.error(f"Error importing preprocess module: {e}")
-except Exception as e:
-    logging.error(f"Unexpected error importing preprocess module: {e}")
+from preprocess import preprocess_query
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -22,26 +11,73 @@ app = Flask(__name__)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 
-# Root route to prevent 404 errors
-@app.route('/')
-def home():
-    return "Bullshit Detector is running!"
+# Function to query different AI models
+def query_model(model_name, prompt):
+    """
+    Generic function to query any supported AI model
+    
+    Args:
+        model_name (str): Identifier for the model to use ("gpt-4o", "claude-3", etc.)
+        prompt (str): The preprocessed query to send
+        
+    Returns:
+        dict: Standardized response with keys:
+            - success: Boolean indicating if the request succeeded
+            - content: The model's response text
+            - model: Name of the model that provided the response
+            - error: Error message (if success is False)
+    """
+    try:
+        if model_name == "gpt-4o":
+            headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
+            payload = {"model": "gpt-4o", "messages": [{"role": "user", "content": prompt}]}
+            endpoint = "https://api.openai.com/v1/chat/completions"
 
-# Function to query OpenAI's GPT-4o
+            response = requests.post(endpoint, json=payload, headers=headers)
+            response_json = response.json()
 
-def query_openai(prompt):
-    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-    payload = {"model": "gpt-4o", "messages": [{"role": "user", "content": prompt}]}
-    response = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers)
-    return response.json()
+            return {
+                "success": True,
+                "content": response_json["choices"][0]["message"]["content"],
+                "model": "gpt-4o",
+                "error": None
+            }
+        
+        elif model_name == "claude-3":
+            headers = {"x-api-key": CLAUDE_API_KEY, "Content-Type": "application/json"}
+            payload = {
+                "model": "claude-3-opus-20240229",
+                "max_tokens": 1000,
+                "messages": [{"role": "user", "content": prompt}]
+            }
+            endpoint = "https://api.anthropic.com/v1/messages"
 
-# Function to query Claude 3
+            response = requests.post(endpoint, json=payload, headers=headers)
+            response_json = response.json()
 
-def query_claude(prompt):
-    headers = {"Authorization": f"Bearer {CLAUDE_API_KEY}", "Content-Type": "application/json"}
-    payload = {"model": "claude-3-opus-20240229", "messages": [{"role": "user", "content": prompt}]}
-    response = requests.post("https://api.anthropic.com/v1/messages", json=payload, headers=headers)
-    return response.json()
+            return {
+                "success": True,
+                "content": response_json["content"][0]["text"],
+                "model": "claude-3",
+                "error": None
+            }
+
+        else:
+            return {
+                "success": False,
+                "content": None,
+                "model": model_name,
+                "error": f"Unsupported model: {model_name}"
+            }
+    
+    except Exception as e:
+        logging.error(f"Error querying {model_name}: {e}")
+        return {
+            "success": False,
+            "content": None,
+            "model": model_name,
+            "error": str(e)
+        }
 
 @app.route('/ask', methods=['POST'])
 def ask():
@@ -52,17 +88,22 @@ def ask():
     structured_query = preprocess_query(raw_query)
     
     # Get responses from both models
-    openai_response = query_openai(structured_query)
-    claude_response = query_claude(structured_query)
+    openai_response = query_model("gpt-4o", structured_query)
+    claude_response = query_model("claude-3", structured_query)
     
     return jsonify({
         "query": raw_query,
         "structured_query": structured_query,
         "responses": {
-            "gpt-4o": openai_response.get("choices", [{}])[0].get("message", {}).get("content", "Error fetching response"),
-            "claude-3": claude_response.get("content", "Error fetching response")
+            "gpt-4o": openai_response,
+            "claude-3": claude_response
         }
     })
+
+# Root route to prevent 404 errors
+@app.route('/')
+def home():
+    return "Bullshit Detector is running!"
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
