@@ -83,24 +83,35 @@ def query_model(model_name, prompt):
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    data = request.json
-    raw_query = data.get("query", "").strip()
-    
-    # Preprocess the query before sending to LLMs
-    structured_query = preprocess_query(raw_query)
-    
-    # Get responses from both models
-    openai_response = query_model("gpt-4o", structured_query)
-    claude_response = query_model("claude-3", structured_query)
-    
-    return jsonify({
-        "query": raw_query,
-        "structured_query": structured_query,
-        "responses": {
-            "gpt-4o": openai_response,
-            "claude-3": claude_response
-        }
-    })
+    try:
+        # Force Flask to parse JSON correctly
+        data = request.get_json(force=True)
+
+        logging.debug(f"Received request data: {data}")
+
+        if not data or "query" not in data:
+            return jsonify({"error": "No query provided"}), 400  # Return 400 if query is missing
+        
+        raw_query = data["query"].strip()
+
+        # Preprocess the query before sending to LLMs
+        structured_query = preprocess_query(raw_query)
+
+        # Get responses from both models
+        openai_response = query_model("gpt-4o", structured_query)
+        claude_response = query_model("claude-3", structured_query)
+
+        return jsonify({
+            "query": raw_query,
+            "structured_query": structured_query,
+            "responses": {
+                "gpt-4o": openai_response,
+                "claude-3": claude_response
+            }
+        })
+    except Exception as e:
+        logging.error(f"Error in /ask route: {e}")
+        return jsonify({"error": str(e)}), 500
 
 # Root route to prevent 404 errors
 @app.route('/')
