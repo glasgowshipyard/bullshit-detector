@@ -2,6 +2,18 @@ from flask import Flask, request, jsonify
 from preprocess import preprocess_query  # Import the preprocessing function
 import requests
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+try:
+    from preprocess import preprocess_query
+    logging.debug("Successfully imported preprocess module.")
+except ImportError as e:
+    logging.error(f"Error importing preprocess module: {e}")
+except Exception as e:
+    logging.error(f"Unexpected error importing preprocess module: {e}")
 
 # Initialize Flask app
 app = Flask(__name__)
