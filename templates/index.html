@@ -9,41 +9,40 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+    /* Define CSS variables for dark mode */
     :root {
       --bg-primary: #0f172a;
       --bg-secondary: #1e293b;
       --text-primary: #e2e8f0;
-      --text-secondary: #94a3b8;
-      --accent-primary: #3b82f6;
-      --accent-secondary: #2563eb;
       --card-bg: rgba(30, 41, 59, 0.8);
       --card-border: rgba(255, 255, 255, 0.1);
       --model-bg: rgba(15, 23, 42, 0.7);
+      --accent-primary: #3b82f6;
+      --accent-secondary: #2563eb;
     }
-    
-    /* Light mode variables */
+
+    /* Light mode variables – adjusted for readability */
     .light-mode {
       --bg-primary: #f1f5f9;
       --bg-secondary: #e2e8f0;
-      --text-primary: #0f172a;
-      --text-secondary: #334155;
-      --card-bg: rgba(255, 255, 255, 0.8);
+      --text-primary: #1e293b;
+      --card-bg: rgba(255, 255, 255, 0.9);
       --card-border: rgba(0, 0, 0, 0.1);
-      --model-bg: rgba(241, 245, 249, 0.7);
+      --model-bg: rgba(241, 245, 249, 0.9);
+      --accent-primary: #3b82f6;
+      --accent-secondary: #2563eb;
     }
-    
+
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--bg-primary);
       color: var(--text-primary);
       transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
-    .gradient-text {
-      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+
+    /* Restore original fancy title */
+    .fancy-title {
+      @apply text-4xl md:text-5xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500;
     }
     
     .card {
@@ -52,7 +51,6 @@
       border: 1px solid var(--card-border);
       transition: all 0.3s ease;
     }
-    
     .card:hover {
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
       transform: translateY(-2px);
@@ -65,7 +63,6 @@
       transition: all 0.3s ease;
       font-size: 16px;
     }
-    
     .input-field:focus {
       border-color: var(--accent-primary);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
@@ -75,7 +72,6 @@
       background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
       transition: all 0.3s ease;
     }
-    
     .submit-btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
@@ -97,11 +93,9 @@
     .truth-high {
       background: linear-gradient(90deg, #22c55e, #16a34a);
     }
-    
     .truth-medium {
       background: linear-gradient(90deg, #eab308, #ca8a04);
     }
-    
     .truth-low {
       background: linear-gradient(90deg, #ef4444, #dc2626);
     }
@@ -111,36 +105,10 @@
       transition: all 0.3s ease;
       background-color: var(--model-bg);
     }
-    
-    .model-openai {
-      border-left-color: #10b981;
-    }
-    
-    .model-claude {
-      border-left-color: #8b5cf6;
-    }
-    
-    .model-mistral {
-      border-left-color: #3b82f6;
-    }
-    
-    .model-deepseek {
-      border-left-color: #f59e0b;
-    }
-    
-    .loader {
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      border-top: 3px solid var(--accent-primary);
-      width: 24px;
-      height: 24px;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    .model-openai { border-left-color: #10b981; }
+    .model-claude { border-left-color: #8b5cf6; }
+    .model-mistral { border-left-color: #3b82f6; }
+    .model-deepseek { border-left-color: #f59e0b; }
     
     .flag-emoji {
       font-size: 1.2em;
@@ -153,32 +121,22 @@
       border-radius: 50%;
       transition: background-color 0.3s ease;
     }
-    
-    .theme-toggle:hover {
-      background-color: var(--bg-secondary);
-    }
+    .theme-toggle:hover { background-color: var(--bg-secondary); }
     
     @media (max-width: 640px) {
       .input-field {
         font-size: 14px;
         padding: 0.75rem 0.5rem;
       }
-      .input-field::placeholder {
-        font-size: 12px;
-      }
-      .submit-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 14px;
-      }
+      .input-field::placeholder { font-size: 12px; }
+      .submit-btn { padding: 0.5rem 0.75rem; font-size: 14px; }
     }
   </style>
 </head>
 <body>
   <div class="container mx-auto px-4 py-8">
     <header class="flex justify-between items-center mb-12">
-      <h1 class="text-4xl md:text-5xl font-bold gradient-text">
-        Bullshit Detector
-      </h1>
+      <h1 class="fancy-title">Bullshit Detector</h1>
       <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
         <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
         <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
@@ -384,7 +342,7 @@
       const moonIcon = document.getElementById('moon-icon');
       const sunIcon = document.getElementById('sun-icon');
       
-      // Check system preference for dark/light mode
+      // Detect system theme initially
       function checkSystemPreference() {
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
           document.body.classList.add('light-mode');
@@ -397,11 +355,11 @@
         }
       }
       
-      // Initial check
+      // Initial theme check
       checkSystemPreference();
       window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', checkSystemPreference);
       
-      // Toggle theme on click
+      // Manual theme toggle
       themeToggle.addEventListener('click', function() {
         document.body.classList.toggle('light-mode');
         moonIcon.classList.toggle('hidden');
