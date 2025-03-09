@@ -195,23 +195,6 @@
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
-
-        /* Fix for all model icons in light mode */
-        .light-mode .from-green-400.to-teal-500 {
-            background: linear-gradient(to right, #059669, #0d9488);
-        }
-
-        .light-mode .from-purple-400.to-indigo-500 {
-            background: linear-gradient(to right, #8b5cf6, #6366f1);
-        }
-
-        .light-mode .from-blue-400.to-blue-600 {
-            background: linear-gradient(to right, #3b82f6, #2563eb);
-        }
-
-        .light-mode .from-yellow-400.to-orange-500 {
-            background: linear-gradient(to right, #d97706, #c2410c);
-        }
         
         /* Light mode loader */
         .light-mode .loader {
@@ -237,7 +220,158 @@
             margin-right: auto;
             padding: 0 1rem;
         }
+
+        /* Fix for washed out GPT icon in light mode */
+        .light-mode .from-green-400.to-teal-500 {
+            background: linear-gradient(to right, #059669, #0d9488);
+        }
+
+        /* Fix for washed out DeepSeek icon in light mode */
+        .light-mode .from-yellow-400.to-orange-500 {
+            background: linear-gradient(to right, #d97706, #c2410c);
+        }
+
+        /* Fix for all model icons in light mode */
+        .light-mode .from-purple-400.to-indigo-500 {
+            background: linear-gradient(to right, #8b5cf6, #6366f1);
+        }
+
+        .light-mode .from-blue-400.to-blue-600 {
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+        }
         
+        /* Beta capsule styling */
+        .beta-tag {
+            position: absolute;
+            top: 0;
+            right: -30px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 999px;
+            transform: rotate(20deg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: 0.05rem;
+            text-transform: uppercase;
+        }
+
+        /* Privacy notice styling */
+        .privacy-notice {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Confidence info tooltip */
+        .confidence-info {
+            position: relative;
+            display: inline-block;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+
+        .confidence-info .tooltip {
+            visibility: hidden;
+            width: 300px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: normal;
+            font-size: 0.75rem;
+            border: 1px solid var(--card-border);
+        }
+
+        .confidence-info .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--bg-secondary) transparent transparent transparent;
+        }
+
+        .confidence-info:hover .tooltip {
+            visibility: visible;
+            opacity: 0.95;
+        }
+
+        /* Whitepaper modal styles */
+        .whitepaper-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .whitepaper-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+
         @media (max-width: 640px) {
             .input-field {
                 font-size: 14px;
@@ -256,6 +390,24 @@
             header {
                 padding-top: 3rem;
             }
+
+            .beta-tag {
+                top: -5px;
+                right: -25px;
+                font-size: 0.55rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .whitepaper-btn {
+                width: 50px;
+                height: 50px;
+                bottom: 15px;
+                right: 15px;
+            }
         }
     </style>
 </head>
@@ -264,6 +416,7 @@
         <header>
             <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center">
                 Bullshit Detector
+                <span class="beta-tag">Beta</span>
             </h1>
             <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
                 <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
@@ -277,7 +430,7 @@
         
         <div class="max-w-4xl mx-auto mb-12">
             <div class="card rounded-xl p-6 shadow-lg">
-                <form id="query-form" class="space-y-4">
+                <form id="query-form" class="space-y-4" autocomplete="off">
                     <div>
                         <label for="query" class="block text-sm font-medium text-gray-400 mb-2">Enter a claim to verify</label>
                         <div class="relative">
@@ -287,6 +440,7 @@
                                 name="query" 
                                 class="input-field w-full py-3 px-4 rounded-lg focus:outline-none" 
                                 placeholder="Ex: Was the moon landing faked?"
+                                autocomplete="off"
                                 required
                             >
                             <button 
@@ -296,6 +450,9 @@
                                 Verify
                             </button>
                         </div>
+                        <p class="privacy-notice">
+                            <i class="fas fa-shield-alt mr-1"></i> No queries are logged or tracked. Your searches remain private.
+                        </p>
                     </div>
                 </form>
             </div>
@@ -311,6 +468,20 @@
                                 FALSE
                             </div>
                             <div class="text-sm text-gray-400" id="confidence-text">High Confidence</div>
+                            <div class="confidence-info">
+                                <i class="fas fa-question-circle text-gray-400"></i>
+                                <div class="tooltip">
+                                    <strong>How confidence is calculated:</strong>
+                                    <ul class="mt-1 ml-4 list-disc">
+                                        <li>VERY HIGH: Near-unanimous agreement with minimal uncertainty</li>
+                                        <li>HIGH: Strong agreement with limited uncertainty</li>
+                                        <li>MEDIUM: Majority agreement but with significant uncertainty</li>
+                                        <li>LOW: Weak agreement with substantial uncertainty</li>
+                                        <li>VERY LOW: No clear consensus or predominantly uncertain</li>
+                                    </ul>
+                                    <p class="mt-1">Based on consensus from multiple AI models, accounting for uncertainty, policy limitations, and contradictions.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-4 md:mt-0 w-full md:w-1/3">
@@ -430,6 +601,25 @@
         </footer>
     </div>
     
+    <!-- Whitepaper button -->
+    <div class="whitepaper-btn" id="whitepaper-btn">
+        <i class="fas fa-file-alt"></i>
+    </div>
+
+    <!-- Whitepaper modal -->
+    <div id="whitepaper-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Bullshit Detector Whitepaper</h2>
+            <p class="text-sm text-gray-400 mb-6">Written in <a href="https://usedumbdown.com" target="_blank" class="text-blue-400 hover:underline">Dumbdown</a></p>
+            
+            <div class="whitepaper-content">
+                <!-- The content of your whitepaper will go here -->
+                <p>Loading whitepaper content...</p>
+            </div>
+        </div>
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const queryForm = document.getElementById('query-form');
@@ -457,6 +647,56 @@
             const themeToggle = document.getElementById('theme-toggle');
             const moonIcon = document.getElementById('moon-icon');
             const sunIcon = document.getElementById('sun-icon');
+            
+            // Whitepaper modal elements
+            const whitepaperBtn = document.getElementById('whitepaper-btn');
+            const whitepaperModal = document.getElementById('whitepaper-modal');
+            const closeModal = document.getElementById('close-modal');
+            const whitepaperContent = document.querySelector('.whitepaper-content');
+            
+            // Open whitepaper modal
+            whitepaperBtn.addEventListener('click', function() {
+                whitepaperModal.style.display = 'block';
+                // Here you would fetch and display the whitepaper content
+                fetch('/static/whitepaper.txt')
+                    .then(response => response.text())
+                    .then(text => {
+                        // Format the text with proper line breaks
+                        const formattedText = text.replace(/\n/g, '<br>');
+                        whitepaperContent.innerHTML = formattedText;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching whitepaper:', error);
+                        whitepaperContent.innerHTML = `
+                            <h3 class="text-xl font-bold mb-4">Executive Summary</h3>
+                            <p class="mb-3">Bullshit Detector tackles misinformation by leveraging consensus across multiple advanced language models.</p>
+                            <p class="mb-3">The system provides rapid verification with transparent confidence indicators, distinguishing between uncertain claims and factually incorrect information.</p>
+                            <p class="mb-3">Novel approach focuses on epistemic humility while still providing actionable insights.</p>
+                            
+                            <h3 class="text-xl font-bold mt-6 mb-4">The Problem</h3>
+                            <p class="mb-3">Misinformation is cheaply produced but costly to debunk (Brandolini's Law).</p>
+                            <p class="mb-3">The asymmetric effort between creating misinformation and refuting it has shifted from primarily cognitive cost to environmental and computational cost with AI.</p>
+                            
+                            <h3 class="text-xl font-bold mt-6 mb-4">Approach</h3>
+                            <p class="mb-3">Aggregate responses from diverse state-of-the-art language models (GPT-4o, Claude 3, Mistral, DeepSeek).</p>
+                            <p class="mb-3">Each model comes from a different AI lab with different training methodologies, reducing shared blind spots.</p>
+                            
+                            <p class="mt-6 text-sm text-gray-400">For the full whitepaper, please contact the developers.</p>
+                        `;
+                    });
+            });
+            
+            // Close modal when clicking the X
+            closeModal.addEventListener('click', function() {
+                whitepaperModal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside of it
+            window.addEventListener('click', function(event) {
+                if (event.target == whitepaperModal) {
+                    whitepaperModal.style.display = 'none';
+                }
+            });
             
             // Check system preference for dark/light mode
             function checkSystemPreference() {
