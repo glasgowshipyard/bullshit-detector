@@ -21,15 +21,17 @@
             --model-bg: rgba(15, 23, 42, 0.7);
         }
         
-        /* Light mode variables */
+        /* Light mode variables - improved for better contrast */
         .light-mode {
             --bg-primary: #f1f5f9;
             --bg-secondary: #e2e8f0;
             --text-primary: #0f172a;
             --text-secondary: #334155;
-            --card-bg: rgba(255, 255, 255, 0.8);
+            --accent-primary: #3b82f6;
+            --accent-secondary: #2563eb;
+            --card-bg: rgba(255, 255, 255, 0.95);
             --card-border: rgba(0, 0, 0, 0.1);
-            --model-bg: rgba(241, 245, 249, 0.7);
+            --model-bg: rgba(241, 245, 249, 0.9);
         }
         
         body {
@@ -37,6 +39,15 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .container {
+            max-width: 1280px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            width: 100%;
         }
         
         .gradient-text {
@@ -51,6 +62,10 @@
             backdrop-filter: blur(10px);
             border: 1px solid var(--card-border);
             transition: all 0.3s ease;
+            width: 100%;
+            max-width: 48rem; /* Match Tailwind's max-w-4xl */
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .card:hover {
@@ -152,33 +167,85 @@
             padding: 8px;
             border-radius: 50%;
             transition: background-color 0.3s ease;
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
         }
         
         .theme-toggle:hover {
             background-color: var(--bg-secondary);
         }
         
+        /* Text color fixes for light mode */
+        .light-mode .text-gray-300 {
+            color: #1e293b;
+        }
+        
+        .light-mode .text-gray-400 {
+            color: #334155;
+        }
+        
+        /* Fix card styling in light mode */
+        .light-mode .card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .light-mode .model-response {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Light mode loader */
+        .light-mode .loader {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top: 3px solid var(--accent-primary);
+        }
+        
+        /* Better centering for the title */
+        header {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            padding-top: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Fix footer centering */
+        footer {
+            text-align: center;
+            width: 100%;
+            max-width: 48rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0 1rem;
+        }
+        
         @media (max-width: 640px) {
             .input-field {
-                font-size: 14px; /* Smaller on mobile */
-                padding: 0.75rem 0.5rem; /* Less padding */
+                font-size: 14px;
+                padding: 0.75rem 0.5rem;
             }
             
             .input-field::placeholder {
-                font-size: 12px; /* Smaller placeholder */
+                font-size: 12px;
             }
             
             .submit-btn {
                 padding: 0.5rem 0.75rem;
                 font-size: 14px;
             }
+            
+            header {
+                padding-top: 3rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container mx-auto px-4 py-8">
-        <header class="flex justify-between items-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold gradient-text">
+        <header>
+            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center">
                 Bullshit Detector
             </h1>
             <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
@@ -409,12 +476,19 @@
             async function fetchModelMetadata() {
                 try {
                     const response = await fetch('/static/model_metadata.json');
+                    console.log("Metadata fetch status:", response.status);
+                    
                     if (response.ok) {
                         const data = await response.json();
+                        console.log("Metadata loaded:", data);
                         updateModelInfo(data);
+                    } else {
+                        console.error("Failed to fetch metadata:", response.statusText);
+                        modelInfo.textContent = "Models trained on data up to: 2023";
                     }
                 } catch (error) {
                     console.error('Error fetching model metadata:', error);
+                    modelInfo.textContent = "Models trained on data up to: 2023";
                 }
             }
             
@@ -425,10 +499,18 @@
                     const modelInfos = [];
                     
                     for (const [modelId, modelData] of Object.entries(data.models)) {
-                        modelInfos.push(`${modelData.name} (${modelData.training_cutoff})`);
+                        if (modelData && modelData.name && modelData.training_cutoff) {
+                            modelInfos.push(`${modelData.name} (${modelData.training_cutoff})`);
+                        }
                     }
                     
-                    modelInfo.textContent = infoText + modelInfos.join(' • ');
+                    if (modelInfos.length > 0) {
+                        modelInfo.textContent = infoText + modelInfos.join(' • ');
+                    } else {
+                        modelInfo.textContent = "Model training data information unavailable";
+                    }
+                } else {
+                    modelInfo.textContent = "Model training data information unavailable";
                 }
             }
             
