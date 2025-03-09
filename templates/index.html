@@ -1,365 +1,563 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bullshit Detector</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #e2e8f0;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        }
-        
-        .card {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            transform: translateY(-2px);
-        }
-        
-        .input-field {
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e2e8f0;
-            transition: all 0.3s ease;
-        }
-        
-        .input-field:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-        }
-        
-        .submit-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .submit-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
-        }
-        
-        .confidence-bar {
-            height: 8px;
-            background: #334155;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .confidence-level {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease-out;
-        }
-        
-        .truth-high {
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-        
-        .truth-medium {
-            background: linear-gradient(90deg, #eab308, #ca8a04);
-        }
-        
-        .truth-low {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-        
-        .model-response {
-            border-left: 4px solid transparent;
-            transition: all 0.3s ease;
-        }
-        
-        .model-openai {
-            border-left-color: #10b981;
-        }
-        
-        .model-claude {
-            border-left-color: #8b5cf6;
-        }
-        
-        .model-gemini {
-            border-left-color: #f59e0b;
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
-        }
-        
-        .loader {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top: 3px solid #3b82f6;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bullshit Detector</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #2563eb;
+      --card-bg: rgba(30, 41, 59, 0.8);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --model-bg: rgba(15, 23, 42, 0.7);
+    }
+    
+    /* Light mode variables */
+    .light-mode {
+      --bg-primary: #f1f5f9;
+      --bg-secondary: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --card-bg: rgba(255, 255, 255, 0.8);
+      --card-border: rgba(0, 0, 0, 0.1);
+      --model-bg: rgba(241, 245, 249, 0.7);
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .input-field {
+      background: var(--model-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      font-size: 16px;
+    }
+    
+    .input-field:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    
+    .submit-btn {
+      background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+    }
+    
+    .confidence-bar {
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .confidence-level {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease-out;
+    }
+    
+    .truth-high {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+    
+    .truth-medium {
+      background: linear-gradient(90deg, #eab308, #ca8a04);
+    }
+    
+    .truth-low {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+    
+    .model-response {
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+      background-color: var(--model-bg);
+    }
+    
+    .model-openai {
+      border-left-color: #10b981;
+    }
+    
+    .model-claude {
+      border-left-color: #8b5cf6;
+    }
+    
+    .model-mistral {
+      border-left-color: #3b82f6;
+    }
+    
+    .model-deepseek {
+      border-left-color: #f59e0b;
+    }
+    
+    .loader {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 3px solid var(--accent-primary);
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .flag-emoji {
+      font-size: 1.2em;
+      margin-right: 8px;
+    }
+    
+    .theme-toggle {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+    
+    .theme-toggle:hover {
+      background-color: var(--bg-secondary);
+    }
+    
+    @media (max-width: 640px) {
+      .input-field {
+        font-size: 14px;
+        padding: 0.75rem 0.5rem;
+      }
+      .input-field::placeholder {
+        font-size: 12px;
+      }
+      .submit-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 14px;
+      }
+    }
+  </style>
 </head>
-<body class="min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Bullshit Detector
-            </h1>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                Verify claims across multiple AI models to detect truth from misinformation
-            </p>
-        </header>
-        
-        <div class="max-w-4xl mx-auto mb-12">
-            <div class="card rounded-xl p-6 shadow-lg">
-                <form id="query-form" class="space-y-4">
-                    <div>
-                        <label for="query" class="block text-sm font-medium text-gray-300 mb-2">Enter a claim to verify</label>
-                        <div class="relative">
-                            <input 
-                                type="text" 
-                                id="query" 
-                                name="query" 
-                                class="input-field w-full py-3 px-4 rounded-lg focus:outline-none" 
-                                placeholder="Ex: Was the moon landing faked?"
-                                required
-                            >
-                            <button 
-                                type="submit" 
-                                class="submit-btn absolute right-2 top-2 rounded-lg px-4 py-1 text-white font-medium"
-                            >
-                                Verify
-                            </button>
-                        </div>
-                    </div>
-                </form>
+<body>
+  <div class="container mx-auto px-4 py-8">
+    <header class="flex justify-between items-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">
+        Bullshit Detector
+      </h1>
+      <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
+        <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
+        <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
+      </div>
+    </header>
+    
+    <p class="text-center text-gray-400 text-lg max-w-2xl mx-auto mb-12">
+      Verify claims across multiple AI models to detect truth from misinformation
+    </p>
+    
+    <div class="max-w-4xl mx-auto mb-12">
+      <div class="card rounded-xl p-6 shadow-lg">
+        <form id="query-form" class="space-y-4">
+          <div>
+            <label for="query" class="block text-sm font-medium text-gray-400 mb-2">Enter a claim to verify</label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="query" 
+                name="query" 
+                class="input-field w-full py-3 px-4 rounded-lg focus:outline-none" 
+                placeholder="Ex: Was the moon landing faked?"
+                required
+              />
+              <button 
+                type="submit" 
+                class="submit-btn absolute right-2 top-2 rounded-lg px-4 py-1 text-white font-medium"
+              >
+                Verify
+              </button>
             </div>
-        </div>
-        
-        <div id="results" class="max-w-4xl mx-auto hidden">
-            <div class="card rounded-xl p-6 shadow-lg mb-8">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                    <div>
-                        <h2 class="text-xl font-semibold mb-1" id="claim-text">Was the moon landing faked?</h2>
-                        <div class="flex items-center">
-                            <div id="verdict-badge" class="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-medium mr-3">
-                                FALSE
-                            </div>
-                            <div class="text-sm text-gray-400">Confidence:</div>
-                        </div>
-                    </div>
-                    <div class="mt-4 md:mt-0 w-full md:w-1/3">
-                        <div class="confidence-bar">
-                            <div id="confidence-level" class="confidence-level truth-high" style="width: 95%"></div>
-                        </div>
-                        <div class="flex justify-between mt-1 text-xs text-gray-400">
-                            <span>Low</span>
-                            <span>Medium</span>
-                            <span>High</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="model-responses" class="space-y-4">
-                    <!-- GPT-4o Response -->
-                    <div class="model-response model-openai bg-gray-800 bg-opacity-50 rounded-lg p-4">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center mr-3">
-                                <i class="fas fa-robot text-white"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-medium">GPT-4o</h3>
-                                <div class="text-xs text-gray-400">OpenAI</div>
-                            </div>
-                        </div>
-                        <p id="gpt-response" class="text-gray-300">
-                            FALSE. The moon landing was not faked. The Apollo missions, conducted by NASA, successfully landed astronauts on the moon six times between 1969 and 1972. These missions have been extensively documented and verified by scientists and experts worldwide.
-                        </p>
-                    </div>
-                    
-                    <!-- Claude Response -->
-                    <div class="model-response model-claude bg-gray-800 bg-opacity-50 rounded-lg p-4">
-                        <div class="flex items-center mb-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center mr-3">
-                                <i class="fas fa-robot text-white"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-medium">Claude 3</h3>
-                                <div class="text-xs text-gray-400">Anthropic</div>
-                            </div>
-                        </div>
-                        <p id="claude-response" class="text-gray-300">
-                            FALSE. The Apollo 11 mission successfully landed on the moon on July 20, 1969. There is overwhelming evidence that confirms the moon landings were real events and not faked.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex justify-between items-center">
-                <button id="new-query-btn" class="text-blue-400 flex items-center">
-                    <i class="fas fa-arrow-left mr-2"></i> New Query
-                </button>
-                <div class="flex space-x-4">
-                    <button class="text-gray-400 hover:text-white transition">
-                        <i class="fas fa-share-alt"></i>
-                    </button>
-                    <button class="text-gray-400 hover:text-white transition">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="loading" class="max-w-4xl mx-auto text-center py-12 hidden">
-            <div class="loader mx-auto mb-4"></div>
-            <p class="text-gray-400">Analyzing with multiple AI models...</p>
-        </div>
-        
-        <footer class="mt-16 text-center text-gray-500 text-sm">
-            <p>© 2025 Bullshit Detector - AI-powered misinformation detection</p>
-        </footer>
+          </div>
+        </form>
+      </div>
     </div>
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const queryForm = document.getElementById('query-form');
-            const resultsSection = document.getElementById('results');
-            const loadingSection = document.getElementById('loading');
-            const newQueryBtn = document.getElementById('new-query-btn');
-            const claimText = document.getElementById('claim-text');
-            const gptResponse = document.getElementById('gpt-response');
-            const claudeResponse = document.getElementById('claude-response');
-            const verdictBadge = document.getElementById('verdict-badge');
-            const confidenceLevel = document.getElementById('confidence-level');
+    <div id="results" class="max-w-4xl mx-auto hidden">
+      <div class="card rounded-xl p-6 shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div>
+            <h2 class="text-xl font-semibold mb-1" id="claim-text">Was the moon landing faked?</h2>
+            <div class="flex items-center">
+              <div id="verdict-badge" class="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-medium mr-3">
+                FALSE
+              </div>
+              <div class="text-sm text-gray-400" id="confidence-text">High Confidence</div>
+            </div>
+          </div>
+          <div class="mt-4 md:mt-0 w-full md:w-1/3">
+            <div class="confidence-bar">
+              <div id="confidence-level" class="confidence-level truth-high" style="width: 95%"></div>
+            </div>
+            <div class="flex justify-between mt-1 text-xs text-gray-400">
+              <span>Low</span>
+              <span>Medium</span>
+              <span>High</span>
+            </div>
+          </div>
+        </div>
+        
+        <div id="model-responses" class="space-y-4">
+          <!-- GPT-4o Response Card -->
+          <div class="model-response model-openai rounded-lg p-4">
+            <div class="flex items-center mb-3">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center mr-3">
+                <i class="fas fa-robot text-white"></i>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center">
+                  <span class="flag-emoji">🇺🇸</span>
+                  <div>
+                    <h3 class="font-medium">GPT-4o</h3>
+                    <div class="text-xs text-gray-400">OpenAI</div>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-400" id="gpt-training-age"></div>
+              </div>
+            </div>
+            <p id="gpt-response" class="text-gray-300">
+              Loading response...
+            </p>
+          </div>
+          
+          <!-- Claude 3 Response Card -->
+          <div class="model-response model-claude rounded-lg p-4">
+            <div class="flex items-center mb-3">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center mr-3">
+                <i class="fas fa-robot text-white"></i>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center">
+                  <span class="flag-emoji">🇺🇸</span>
+                  <div>
+                    <h3 class="font-medium">Claude 3</h3>
+                    <div class="text-xs text-gray-400">Anthropic</div>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-400" id="claude-training-age"></div>
+              </div>
+            </div>
+            <p id="claude-response" class="text-gray-300">
+              Loading response...
+            </p>
+          </div>
+          
+          <!-- Mistral Response Card -->
+          <div class="model-response model-mistral rounded-lg p-4">
+            <div class="flex items-center mb-3">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center mr-3">
+                <i class="fas fa-robot text-white"></i>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center">
+                  <span class="flag-emoji">🇫🇷</span>
+                  <div>
+                    <h3 class="font-medium">Mistral</h3>
+                    <div class="text-xs text-gray-400">Mistral AI</div>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-400" id="mistral-training-age"></div>
+              </div>
+            </div>
+            <p id="mistral-response" class="text-gray-300">
+              Loading response...
+            </p>
+          </div>
+          
+          <!-- DeepSeek Response Card -->
+          <div class="model-response model-deepseek rounded-lg p-4 hidden">
+            <div class="flex items-center mb-3">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center mr-3">
+                <i class="fas fa-robot text-white"></i>
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center">
+                  <span class="flag-emoji">🇨🇳</span>
+                  <div>
+                    <h3 class="font-medium">DeepSeek</h3>
+                    <div class="text-xs text-gray-400">DeepSeek AI</div>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-400" id="deepseek-training-age"></div>
+              </div>
+            </div>
+            <p id="deepseek-response" class="text-gray-300">
+              Loading response...
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-between items-center">
+        <button id="new-query-btn" class="text-blue-400 flex items-center">
+          <i class="fas fa-arrow-left mr-2"></i> New Query
+        </button>
+        <div class="flex space-x-4">
+          <button class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-share-alt"></i>
+          </button>
+          <button class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-download"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="loading" class="max-w-4xl mx-auto text-center py-12 hidden">
+      <div class="loader mx-auto mb-4"></div>
+      <p class="text-gray-400">Analyzing with multiple AI models...</p>
+    </div>
+    
+    <footer class="mt-16 text-center text-gray-500 text-sm">
+      <p id="model-info" class="mb-2"></p>
+      <p>© 2025 Bullshit Detector - AI-powered misinformation detection</p>
+    </footer>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const queryForm = document.getElementById('query-form');
+      const resultsSection = document.getElementById('results');
+      const loadingSection = document.getElementById('loading');
+      const newQueryBtn = document.getElementById('new-query-btn');
+      const claimText = document.getElementById('claim-text');
+      const gptResponse = document.getElementById('gpt-response');
+      const claudeResponse = document.getElementById('claude-response');
+      const mistralResponse = document.getElementById('mistral-response');
+      const deepseekResponse = document.getElementById('deepseek-response');
+      
+      // Model containers
+      const gptContainer = document.querySelector('.model-openai');
+      const claudeContainer = document.querySelector('.model-claude');
+      const mistralContainer = document.querySelector('.model-mistral');
+      const deepseekContainer = document.querySelector('.model-deepseek');
+      
+      const verdictBadge = document.getElementById('verdict-badge');
+      const confidenceLevel = document.getElementById('confidence-level');
+      const confidenceText = document.getElementById('confidence-text');
+      const modelInfo = document.getElementById('model-info');
+      
+      // Theme toggle elements
+      const themeToggle = document.getElementById('theme-toggle');
+      const moonIcon = document.getElementById('moon-icon');
+      const sunIcon = document.getElementById('sun-icon');
+      
+      // Check system preference for dark/light mode
+      function checkSystemPreference() {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+          document.body.classList.add('light-mode');
+          moonIcon.classList.remove('hidden');
+          sunIcon.classList.add('hidden');
+        } else {
+          document.body.classList.remove('light-mode');
+          moonIcon.classList.add('hidden');
+          sunIcon.classList.remove('hidden');
+        }
+      }
+      
+      // Initial check
+      checkSystemPreference();
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', checkSystemPreference);
+      
+      // Toggle theme on click
+      themeToggle.addEventListener('click', function() {
+        document.body.classList.toggle('light-mode');
+        moonIcon.classList.toggle('hidden');
+        sunIcon.classList.toggle('hidden');
+      });
+      
+      // Fetch model metadata and update footer and training age displays
+      async function fetchModelMetadata() {
+        try {
+          const response = await fetch('/static/model_metadata.json');
+          if (response.ok) {
+            const data = await response.json();
+            updateModelInfo(data);
+          }
+        } catch (error) {
+          console.error('Error fetching model metadata:', error);
+        }
+      }
+      
+      function updateModelInfo(data) {
+        if (data && data.models) {
+          let infoText = "Models trained on data up to: ";
+          const modelInfos = [];
+          const currentYear = new Date().getFullYear();
+          for (const [modelId, modelData] of Object.entries(data.models)) {
+            let trainingAge = "N/A";
+            const cutoffYearMatch = modelData.training_cutoff.match(/\d{4}/);
+            if (cutoffYearMatch) {
+              const cutoffYear = parseInt(cutoffYearMatch[0]);
+              trainingAge = currentYear - cutoffYear;
+            }
+            modelInfos.push(`${modelData.name} (Cutoff: ${modelData.training_cutoff}, Age: ${trainingAge} yrs)`);
             
-            queryForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const query = document.getElementById('query').value;
-                
-                if (query.trim() === '') return;
-                
-                // Show loading
-                resultsSection.classList.add('hidden');
-                loadingSection.classList.remove('hidden');
-                
-                // Make API request
-                fetch('/ask', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ query: query }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Update UI with results
-                    claimText.textContent = data.query;
-                    
-                    // Update model responses
-                    if (data.responses['gpt-4o'].success) {
-                        gptResponse.textContent = data.responses['gpt-4o'].content;
-                    } else {
-                        gptResponse.textContent = 'Error retrieving response.';
-                        gptResponse.classList.add('text-red-400');
-                    }
-                    
-                    if (data.responses['claude-3'].success) {
-                        claudeResponse.textContent = data.responses['claude-3'].content;
-                    } else {
-                        claudeResponse.textContent = 'Error retrieving response.';
-                        claudeResponse.classList.add('text-red-400');
-                    }
-                    
-                    // Determine verdict (simplified version)
-                    const gptText = data.responses['gpt-4o'].content || '';
-                    const claudeText = data.responses['claude-3'].content || '';
-                    
-                    let verdict = 'UNCERTAIN';
-                    let confidenceWidth = '50%';
-                    let confidenceClass = 'truth-medium';
-                    
-                    // Simple check for TRUE/FALSE in both responses
-                    const gptTrue = gptText.toUpperCase().includes('TRUE') && !gptText.toUpperCase().includes('FALSE');
-                    const gptFalse = gptText.toUpperCase().includes('FALSE');
-                    const claudeTrue = claudeText.toUpperCase().includes('TRUE') && !claudeText.toUpperCase().includes('FALSE');
-                    const claudeFalse = claudeText.toUpperCase().includes('FALSE');
-                    
-                    if ((gptTrue && claudeTrue) || (gptFalse && claudeFalse)) {
-                        // Agreement
-                        verdict = gptTrue ? 'TRUE' : 'FALSE';
-                        confidenceWidth = '95%';
-                        confidenceClass = verdict === 'TRUE' ? 'truth-high' : 'truth-high';
-                    } else if (gptTrue || claudeTrue) {
-                        // Some evidence of truth
-                        verdict = 'POSSIBLY TRUE';
-                        confidenceWidth = '60%';
-                        confidenceClass = 'truth-medium';
-                    } else if (gptFalse || claudeFalse) {
-                        // Some evidence of falsehood
-                        verdict = 'LIKELY FALSE';
-                        confidenceWidth = '75%';
-                        confidenceClass = 'truth-medium';
-                    }
-                    
-                    // Update UI with verdict
-                    verdictBadge.textContent = verdict;
-                    
-                    // Update badge color
-                    verdictBadge.className = 'px-3 py-1 rounded-full text-white text-sm font-medium mr-3';
-                    if (verdict === 'TRUE' || verdict === 'FALSE') {
-                        verdictBadge.classList.add(verdict === 'TRUE' ? 'bg-green-500' : 'bg-red-500');
-                    } else {
-                        verdictBadge.classList.add('bg-yellow-500');
-                    }
-                    
-                    // Update confidence bar
-                    confidenceLevel.style.width = confidenceWidth;
-                    confidenceLevel.className = 'confidence-level ' + confidenceClass;
-                    
-                    // Show results
-                    loadingSection.classList.add('hidden');
-                    resultsSection.classList.remove('hidden');
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    loadingSection.classList.add('hidden');
-                    alert('An error occurred while processing your request.');
-                });
-            });
+            let elementId = "";
+            if (modelId === "gpt-4o") elementId = "gpt-training-age";
+            else if (modelId === "claude-3") elementId = "claude-training-age";
+            else if (modelId === "mistral") elementId = "mistral-training-age";
+            else if (modelId === "deepseek") elementId = "deepseek-training-age";
             
-            newQueryBtn.addEventListener('click', function() {
-                resultsSection.classList.add('hidden');
-                document.getElementById('query').value = '';
-                document.getElementById('query').focus();
-            });
+            if (elementId) {
+              const elem = document.getElementById(elementId);
+              if (elem) {
+                elem.textContent = `Training Age: ${trainingAge} yrs`;
+              }
+            }
+          }
+          modelInfo.textContent = infoText + modelInfos.join(' • ');
+        }
+      }
+      
+      // Fetch metadata on load
+      fetchModelMetadata();
+      
+      // Handle query submission
+      queryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = document.getElementById('query').value.trim();
+        if (!query) return;
+        
+        resultsSection.classList.add('hidden');
+        loadingSection.classList.remove('hidden');
+        
+        // Reset responses and hide model containers
+        [gptContainer, claudeContainer, mistralContainer, deepseekContainer].forEach(c => c.classList.add('hidden'));
+        
+        fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        })
+        .then(response => response.json())
+        .then(data => {
+          claimText.textContent = data.query;
+          
+          if (data.responses['gpt-4o'] && data.responses['gpt-4o'].success) {
+            gptContainer.classList.remove('hidden');
+            gptResponse.textContent = data.responses['gpt-4o'].content;
+            gptResponse.classList.remove('text-red-400');
+          } else {
+            gptResponse.textContent = 'Error retrieving response.';
+            gptResponse.classList.add('text-red-400');
+          }
+          
+          if (data.responses['claude-3'] && data.responses['claude-3'].success) {
+            claudeContainer.classList.remove('hidden');
+            claudeResponse.textContent = data.responses['claude-3'].content;
+            claudeResponse.classList.remove('text-red-400');
+          } else {
+            claudeResponse.textContent = 'Error retrieving response.';
+            claudeResponse.classList.add('text-red-400');
+          }
+          
+          if (data.responses['mistral'] && data.responses['mistral'].success) {
+            mistralContainer.classList.remove('hidden');
+            mistralResponse.textContent = data.responses['mistral'].content;
+            mistralResponse.classList.remove('text-red-400');
+          } else {
+            mistralResponse.textContent = 'Error retrieving response.';
+            mistralResponse.classList.add('text-red-400');
+          }
+          
+          if (data.responses['deepseek'] && data.responses['deepseek'].success) {
+            deepseekContainer.classList.remove('hidden');
+            deepseekResponse.textContent = data.responses['deepseek'].content;
+            deepseekResponse.classList.remove('text-red-400');
+          } else {
+            deepseekResponse.textContent = 'Error retrieving response.';
+            deepseekResponse.classList.add('text-red-400');
+          }
+          
+          // Update verdict using the server-side analysis
+          if (data.analysis) {
+            updateVerdict(data.analysis);
+          } else {
+            updateVerdict({ verdict: 'UNCERTAIN', confidence_percentage: 50, confidence_level: 'Medium' });
+          }
+          
+          loadingSection.classList.add('hidden');
+          resultsSection.classList.remove('hidden');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          loadingSection.classList.add('hidden');
+          alert('An error occurred while processing your request.');
         });
-    </script>
+      });
+      
+      function updateVerdict(analysis) {
+        verdictBadge.textContent = analysis.verdict;
+        verdictBadge.className = 'px-3 py-1 rounded-full text-white text-sm font-medium mr-3';
+        if (analysis.verdict === 'TRUE') {
+          verdictBadge.classList.add('bg-green-500');
+        } else if (analysis.verdict === 'FALSE') {
+          verdictBadge.classList.add('bg-red-500');
+        } else {
+          verdictBadge.classList.add('bg-yellow-500');
+        }
+        
+        confidenceText.textContent = analysis.confidence_level + ' Confidence';
+        confidenceLevel.style.width = analysis.confidence_percentage + '%';
+        confidenceLevel.className = 'confidence-level';
+        if (analysis.confidence_percentage >= 70) {
+          confidenceLevel.classList.add('truth-high');
+        } else if (analysis.confidence_percentage >= 40) {
+          confidenceLevel.classList.add('truth-medium');
+        } else {
+          confidenceLevel.classList.add('truth-low');
+        }
+      }
+      
+      newQueryBtn.addEventListener('click', function() {
+        resultsSection.classList.add('hidden');
+        document.getElementById('query').value = '';
+        document.getElementById('query').focus();
+      });
+    });
+  </script>
 </body>
 </html>
