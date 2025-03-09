@@ -418,12 +418,3 @@ if __name__ == '__main__':
     
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
-@app.route('/metadata', methods=['GET'])
-def get_model_metadata():
-    try:
-        with open("metadata/model_metadata.json", "r") as f:
-            metadata = json.load(f)
-        return jsonify(metadata)
-    except FileNotFoundError:
-        return jsonify({"error": "Metadata file not found"}), 404
