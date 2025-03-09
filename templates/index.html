@@ -243,8 +243,8 @@
         /* Beta capsule styling */
         .beta-tag {
             position: absolute;
-            top: 0;
-            right: -30px;
+            top: -5px;
+            right: -40px;
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
             font-size: 0.65rem;
@@ -317,9 +317,9 @@
             right: 20px;
             background: var(--accent-primary);
             color: white;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
+            border-radius: 24px;
+            padding: 0 20px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -332,6 +332,24 @@
         .whitepaper-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .whitepaper-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 640px) {
+            .whitepaper-btn {
+                height: 40px;
+                padding: 0 15px;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .whitepaper-text {
+                font-size: 12px;
+            }
         }
 
         .modal {
@@ -413,8 +431,8 @@
 </head>
 <body>
     <div class="container mx-auto px-4 py-8">
-        <header>
-            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center">
+          <header>
+            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block">
                 Bullshit Detector
                 <span class="beta-tag">Beta</span>
             </h1>
@@ -603,7 +621,8 @@
     
     <!-- Whitepaper button -->
     <div class="whitepaper-btn" id="whitepaper-btn">
-        <i class="fas fa-file-alt"></i>
+      <i class="fas fa-file-alt mr-2"></i>
+      <span class="whitepaper-text">Whitepaper</span>
     </div>
 
     <!-- Whitepaper modal -->
