@@ -290,26 +290,33 @@
 
         /* Mobile adjustments */
         @media (max-width: 640px) {
-            /* Mobile beta tag adjustments */
+            /* Beta tag mobile adjustments */
             .beta-tag {
-                font-size: 0.55rem;
-                top: -2px;
+                top: 16px;
                 right: -25px;
+                font-size: 0.55rem;
                 padding: 0.15rem 0.35rem;
+                border-radius: 12px;
             }
             
-            /* Mobile whitepaper button - return to circle with just icon */
+            /* Mobile whitepaper button */
             .whitepaper-btn {
                 border-radius: 50%;
                 width: 50px;
                 height: 50px;
                 padding: 0;
                 bottom: 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             /* Hide the text on mobile */
             .whitepaper-text {
                 display: none;
+            }
+            .whitepaper-btn i {
+                margin: auto;
             }
         }
 
