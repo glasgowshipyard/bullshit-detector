@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 import logging
 import os
 import requests
 import json
 import re
+from flask_sslify import SSLify
 from preprocess import preprocess_query
 
 # Configure logging
@@ -12,6 +13,9 @@ logging.basicConfig(level=logging.DEBUG,
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='static', template_folder='templates')
+
+# Force SSL
+sslify = SSLify(app, permanent=True)
 
 # Load API keys from environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
