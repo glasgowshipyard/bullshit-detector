@@ -1,8 +1,8 @@
 Bullshit Detector Whitepaper
-=============================
+============================
 
 Executive Summary
-----------------
+-----------------
 
 - Misinformation proliferates rapidly, undermining trust and clarity in public discourse
 - Bullshit Detector tackles misinformation by leveraging consensus across multiple AI models
