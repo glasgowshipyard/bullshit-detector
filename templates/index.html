@@ -490,17 +490,24 @@
 </head>
 <body>
     <div class="container mx-auto px-4 py-8">
-        <header>
-            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block">
+        <header class="relative">
+            <!-- Centered title with beta tag -->
+            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block mx-auto">
                 Bullshit Detector
                 <span class="beta-tag">Beta</span>
             </h1>
-            <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
-                <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
-                <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
-            </div>
-            <div class="api-status ml-4">
-                <i id="credit-battery" class="fas fa-battery-full text-green-500" title="API Credits Status"></i>
+            <!-- Right side controls as absolute positioned elements -->
+            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-4">
+                <!-- Battery indicator - now defaulting to amber -->
+                <div class="api-status">
+                    <i id="credit-battery" class="fas fa-battery-half text-yellow-500" title="API Credits: 50% remaining"></i>
+                </div>
+                
+                <!-- Theme toggle -->
+                <div class="" id="theme-toggle" aria-label="Toggle dark/light mode">
+                    <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
+                    <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
+                </div>
             </div>
         </header>
         

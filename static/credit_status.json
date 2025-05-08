@@ -1,7 +1,7 @@
 {
-  "status": "green",
-  "icon": "fa-battery-full",
-  "percentage": 100,
-  "balance": 100,
+  "status": "yellow",
+  "icon": "fa-battery-half",
+  "percentage": 50,
+  "balance": 50,
   "last_updated": "2025-05-07 00:00:00"
 }
