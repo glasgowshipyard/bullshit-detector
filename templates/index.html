@@ -490,24 +490,19 @@
 </head>
 <body>
     <div class="container mx-auto px-4 py-8">
-        <header class="relative">
-            <!-- Centered title with beta tag -->
-            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block mx-auto">
+        <!-- Battery indicator positioned absolutely at top right -->
+        <div class="absolute top-2 right-4 z-10">
+            <i id="credit-battery" class="fas fa-battery-half text-yellow-500 text-2xl" title="API Credits: 50% remaining"></i>
+        </div>
+    
+        <header>
+            <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block">
                 Bullshit Detector
                 <span class="beta-tag">Beta</span>
             </h1>
-            <!-- Right side controls as absolute positioned elements -->
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-4">
-                <!-- Battery indicator - now defaulting to amber -->
-                <div class="api-status">
-                    <i id="credit-battery" class="fas fa-battery-half text-yellow-500" title="API Credits: 50% remaining"></i>
-                </div>
-                
-                <!-- Theme toggle -->
-                <div class="" id="theme-toggle" aria-label="Toggle dark/light mode">
-                    <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
-                    <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
-                </div>
+            <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
+                <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
+                <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
             </div>
         </header>
         
@@ -1090,5 +1085,6 @@
             setInterval(updateBatteryStatus, 5 * 60 * 1000);
         });
     </script>
+    </div>
 </body>
 </html>
