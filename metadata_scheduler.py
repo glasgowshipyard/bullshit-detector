@@ -160,7 +160,7 @@ def get_credit_status():
             percentage = (total_balance / initial_balance) * 100
             
             # Determine status based on percentage
-            if percentage > 30:
+            if percentage > 60:
                 status = "green"
                 icon = "fa-battery-full"
             elif percentage > 10:
