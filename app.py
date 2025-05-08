@@ -422,3 +422,25 @@ if __name__ == '__main__':
     
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+@app.route('/api/credit-status')
+def credit_status():
+    try:
+        # Check if credit status file exists
+        credit_file = os.path.join("static", "credit_status.json")
+        if os.path.exists(credit_file):
+            with open(credit_file, 'r') as f:
+                credit_data = json.load(f)
+                return jsonify(credit_data)
+        else:
+            # Return a default status if file doesn't exist
+            return jsonify({
+                "status": "unknown",
+                "icon": "fa-battery",
+                "percentage": 100,
+                "balance": "N/A",
+                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+    except Exception as e:
+        logging.error(f"Error fetching credit status: {e}")
+        return jsonify({"error": str(e)}), 500

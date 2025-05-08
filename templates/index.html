@@ -490,7 +490,7 @@
 </head>
 <body>
     <div class="container mx-auto px-4 py-8">
-          <header>
+        <header>
             <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block">
                 Bullshit Detector
                 <span class="beta-tag">Beta</span>
@@ -498,6 +498,9 @@
             <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
                 <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
                 <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
+            </div>
+            <div class="api-status ml-4">
+                <i id="credit-battery" class="fas fa-battery-full text-green-500" title="API Credits Status"></i>
             </div>
         </header>
         
@@ -1036,6 +1039,48 @@
                 document.getElementById('query').value = '';
                 document.getElementById('query').focus();
             });
+        });
+        function updateBatteryStatus() {
+        fetch('/api/credit-status')
+        .then(response => response.json())
+        .then(data => {
+            // Update battery icon
+            const batteryIcon = document.getElementById('credit-battery');
+            
+            // Clear previous classes
+            batteryIcon.className = 'fas';
+            
+            // Add appropriate battery icon class
+            batteryIcon.classList.add(data.icon);
+            
+            // Add appropriate color class
+            if (data.status === 'green') {
+                batteryIcon.classList.add('text-green-500');
+            } else if (data.status === 'yellow') {
+                batteryIcon.classList.add('text-yellow-500');
+            } else if (data.status === 'red') {
+                batteryIcon.classList.add('text-red-500');
+            } else {
+                batteryIcon.classList.add('text-gray-400');
+            }
+            
+            // Update tooltip
+            batteryIcon.title = `API Credits: ${data.percentage}% remaining`;
+        })
+        .catch(error => {
+            console.error('Error fetching battery status:', error);
+            // Set to unknown state
+            document.getElementById('credit-battery').className = 'fas fa-battery text-gray-400';
+        });
+}
+
+        // Call on page load and set interval
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add this to your existing DOMContentLoaded function
+            updateBatteryStatus();
+            
+            // Check battery status every 5 minutes
+            setInterval(updateBatteryStatus, 5 * 60 * 1000);
         });
     </script>
 </body>

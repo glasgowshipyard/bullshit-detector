@@ -142,13 +142,70 @@ def get_model_metadata():
     
     return metadata
 
+# New function to get credit status from DeepSeek API
+def get_credit_status():
+    """Get credit balance from DeepSeek API and calculate status"""
+    try:
+        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
+        response = requests.get("https://api.deepseek.com/user/balance", headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Extract total balance
+            total_balance = data.get("total_balance", 0)
+            # Assuming initial or max balance is 100 units
+            initial_balance = 100  # You should adjust this based on your account
+            
+            # Calculate percentage remaining
+            percentage = (total_balance / initial_balance) * 100
+            
+            # Determine status based on percentage
+            if percentage > 30:
+                status = "green"
+                icon = "fa-battery-full"
+            elif percentage > 10:
+                status = "yellow"
+                icon = "fa-battery-half"
+            else:
+                status = "red"
+                icon = "fa-battery-quarter"
+                
+            credit_info = {
+                "status": status,
+                "icon": icon,
+                "percentage": round(percentage),
+                "balance": total_balance,
+                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+            # Save to a JSON file for the frontend to access
+            with open('static/credit_status.json', 'w') as f:
+                json.dump(credit_info, f, indent=2)
+                
+            logging.info(f"Credit status updated: {status} ({percentage}%)")
+            return credit_info
+            
+        else:
+            logging.error(f"Error getting DeepSeek balance: {response.status_code}")
+            return {"status": "unknown", "icon": "fa-battery", "percentage": 0}
+            
+    except Exception as e:
+        logging.error(f"Error checking credit balance: {e}")
+        return {"status": "unknown", "icon": "fa-battery", "percentage": 0}
+
+# Updated run_scheduler function to also check credit status
 def run_scheduler():
-    """Run this script once every 24 hours to update model metadata"""
+    """Run this script once every 24 hours to update model metadata and credit status"""
     while True:
         try:
             logging.info("Fetching model metadata...")
             metadata = get_model_metadata()
             logging.info(f"Successfully collected metadata for {len(metadata['models'])} models")
+            
+            # Get credit status
+            logging.info("Checking API credit status...")
+            credit_status = get_credit_status()
+            logging.info(f"Credit status: {credit_status['status']} ({credit_status['percentage']}%)")
             
             # Sleep for 24 hours
             logging.info("Next update in 24 hours")
