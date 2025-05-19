@@ -136,7 +136,7 @@ def get_model_metadata():
     try:
         with open('/tmp/model_metadata.json', 'w') as f:
             json.dump(metadata, f, indent=2)
-        logging.info(f"Metadata saved to static/model_metadata.json")
+        logging.info(f"Metadata saved to tmp/model_metadata.json")
     except Exception as e:
         logging.error(f"Error saving metadata: {e}")
     
@@ -152,7 +152,7 @@ def get_credit_status():
         if response.status_code == 200:
             data = response.json()
             # Extract total balance
-            total_balance = data.get("total_balance", 0)
+            total_balance = float(data["balance_infos"][0]["total_balance"])
             # Assuming initial or max balance is 100 units
             initial_balance = 10.00  # $10 = 100% battery
             
