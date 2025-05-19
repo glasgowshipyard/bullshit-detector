@@ -134,7 +134,7 @@ def get_model_metadata():
     
     # Save to a JSON file
     try:
-        with open('static/model_metadata.json', 'w') as f:
+        with open('/tmp/model_metadata.json', 'w') as f:
             json.dump(metadata, f, indent=2)
         logging.info(f"Metadata saved to static/model_metadata.json")
     except Exception as e:
@@ -154,7 +154,7 @@ def get_credit_status():
             # Extract total balance
             total_balance = data.get("total_balance", 0)
             # Assuming initial or max balance is 100 units
-            initial_balance = 100  # You should adjust this based on your account
+            initial_balance = 10.00  # $10 = 100% battery
             
             # Calculate percentage remaining
             percentage = (total_balance / initial_balance) * 100
@@ -179,7 +179,7 @@ def get_credit_status():
             }
             
             # Save to a JSON file for the frontend to access
-            with open('static/credit_status.json', 'w') as f:
+            with open('/tmp/credit_status.json', 'w') as f:
                 json.dump(credit_info, f, indent=2)
                 
             logging.info(f"Credit status updated: {status} ({percentage}%)")

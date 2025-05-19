@@ -397,51 +397,58 @@ def ask():
         logging.error(f"Error in /ask route: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Root route to render the main interface
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    # Create static directory if it doesn't exist
-    os.makedirs("static", exist_ok=True)
-    
-    # Create initial model metadata file if it doesn't exist
-    metadata_file = os.path.join("static", "model_metadata.json")
-    if not os.path.exists(metadata_file):
-        initial_metadata = {
-            "last_updated": "2025-03-08",
-            "models": {
-                "gpt-4o": {"name": "GPT-4o", "provider": "OpenAI", "training_cutoff": "April 2023"},
-                "claude-3": {"name": "Claude 3 Opus", "provider": "Anthropic", "training_cutoff": "August 2023"},
-                "mistral": {"name": "Mistral Large", "provider": "Mistral AI", "training_cutoff": "December 2023"},
-                "deepseek": {"name": "DeepSeek Chat", "provider": "DeepSeek AI", "training_cutoff": "January 2023"}
-            }
-        }
-        with open(metadata_file, 'w') as f:
-            json.dump(initial_metadata, f, indent=2)
-    
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
-@app.route('/api/credit-status')
-def credit_status():
+@app.route('/api/model-metadata', methods=['GET'])
+def get_model_metadata():
+    """Return model metadata for the frontend"""
     try:
-        # Check if credit status file exists
-        credit_file = os.path.join("static", "credit_status.json")
-        if os.path.exists(credit_file):
-            with open(credit_file, 'r') as f:
-                credit_data = json.load(f)
-                return jsonify(credit_data)
+        # Try to read from the scheduler's updated file
+        metadata_file = "/tmp/model_metadata.json"
+        if os.path.exists(metadata_file):
+            with open(metadata_file, 'r') as f:
+                return jsonify(json.load(f))
         else:
-            # Return a default status if file doesn't exist
-            return jsonify({
-                "status": "unknown",
-                "icon": "fa-battery",
-                "percentage": 100,
-                "balance": "N/A",
-                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
+            # Return default metadata if scheduler hasn't run yet
+            default_metadata = {
+                "last_updated": "2025-01-08",
+                "models": {
+                    "gpt-4o": {"name": "GPT-4o", "provider": "OpenAI", "training_cutoff": "April 2023"},
+                    "claude-3": {"name": "Claude 3 Opus", "provider": "Anthropic", "training_cutoff": "August 2023"},
+                    "mistral": {"name": "Mistral Large", "provider": "Mistral AI", "training_cutoff": "December 2023"},
+                    "deepseek": {"name": "DeepSeek Chat", "provider": "DeepSeek AI", "training_cutoff": "January 2023"}
+                }
+            }
+            return jsonify(default_metadata)
     except Exception as e:
-        logging.error(f"Error fetching credit status: {e}")
+        logging.error(f"Error fetching model metadata: {e}")
         return jsonify({"error": str(e)}), 500
+
+    # Root route to render the main interface
+    @app.route('/')
+    def home():
+        return render_template('index.html')
+
+    @app.route('/api/credit-status')
+    def credit_status():
+        try:
+            # Check if credit status file exists
+            credit_file = "/tmp/credit_status.json"
+            if os.path.exists(credit_file):
+                with open(credit_file, 'r') as f:
+                    credit_data = json.load(f)
+                    return jsonify(credit_data)
+            else:
+                # Return a default status if file doesn't exist
+                return jsonify({
+                    "status": "unknown",
+                    "icon": "fa-battery",
+                    "percentage": 100,
+                    "balance": "N/A",
+                    "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+        except Exception as e:
+            logging.error(f"Error fetching credit status: {e}")
+            return jsonify({"error": str(e)}), 500
+        
+    if __name__ == '__main__':
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host="0.0.0.0", port=port)

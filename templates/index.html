@@ -816,7 +816,7 @@
                 // Fetch model metadata
                 async function fetchModelMetadata() {
                     try {
-                        const response = await fetch('/static/model_metadata.json');
+                        const response = await fetch('/api/model-metadata');
                         console.log("Metadata fetch status:", response.status);
                         
                         if (response.ok) {
