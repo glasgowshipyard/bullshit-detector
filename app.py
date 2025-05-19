@@ -448,6 +448,19 @@ def credit_status():
         logging.error(f"Error fetching credit status: {e}")
         return jsonify({"error": str(e)}), 500
 
+from metadata_scheduler import get_model_metadata, get_credit_status
+
+@app.route('/admin/run-scheduler', methods=['POST'])
+def trigger_scheduler():
+    try:
+        # Run the metadata collection
+        get_model_metadata()
+        # Run the credit status check  
+        get_credit_status()
+        return jsonify({"status": "success", "message": "Scheduler completed"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
