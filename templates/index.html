@@ -85,48 +85,40 @@
                 border-color: var(--accent-primary);
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
             }
-            
+            /* Begin submit button */
             .submit-btn {
-                background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-                transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            border: 2px solid transparent;             /* Prevent layout shift on focus */
+            box-sizing: border-box;                    /* Ensure borders don’t affect layout */
+            -webkit-tap-highlight-color: transparent;  /* Remove iOS highlight */
+            touch-action: manipulation;                /* Optimise touch response */
+            transition: all 0.3s ease;
             }
-            
+
             .submit-btn:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
             }
-            /* Touch device focus fix */
+
+            /* Suppress focus outline globally */
+            .submit-btn:focus {
+            outline: none;
+            }
+
+            /* Only show border on keyboard nav */
+            .submit-btn:focus-visible {
+            border-color: var(--accent-primary);
+            }
+
+            /* Touch device override: remove hover transforms on tap focus */
             @media (hover: none) {
             .submit-btn:focus {
                 transform: none;
                 box-shadow: none;
-                outline: none;
-                }
             }
+            }
+            /* End submit button */
 
-            .submit-btn {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            }
-            .submit-btn:focus {
-            outline: none;
-            }
-            .submit-btn::-moz-focus-inner {
-            border: none;
-            }
-
-            .submit-btn {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            }
-
-            .submit-btn:focus {
-            outline: none;
-            }
-            .submit-btn:focus-visible {
-            outline: 2px solid var(--accent-primary);
-            }
-            
             .confidence-bar {
                 height: 8px;
                 background: var(--bg-secondary);
