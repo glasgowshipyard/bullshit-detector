@@ -114,6 +114,18 @@
             .submit-btn::-moz-focus-inner {
             border: none;
             }
+
+            .submit-btn {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            }
+
+            .submit-btn:focus {
+            outline: none;
+            }
+            .submit-btn:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            }
             
             .confidence-bar {
                 height: 8px;
