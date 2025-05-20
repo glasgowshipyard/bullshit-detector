@@ -516,7 +516,7 @@
             }
         </style>
         <!-- Stripe checkout JS -->
-        <script src="https://js.stripe.com/v3/" async></script>
+        <script src="https://js.stripe.com/v3/"></script>
     </head>
     <body>
         <div class="container mx-auto px-4 py-8">
@@ -570,17 +570,17 @@
                 </div>
             </div>
             <!-- Donation section with single button -->
-<div class="max-w-4xl mx-auto mb-8">
-    <button id="donate-btn" class="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
-        DONATE
-    </button>
-    
-    <div class="text-center mt-2">
-        <span class="text-sm text-gray-500">
-            <i class="fas fa-clock"></i> Credits restored within 24 hours
-        </span>
-    </div>
-</div>
+            <div class="max-w-4xl mx-auto mb-8 text-center">
+                <button id="donate-btn" class="inline-block px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                    DONATE
+                </button>
+                
+                <div class="text-center mt-2">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-clock"></i> Credits restored within 24 hours
+                    </span>
+                </div>
+            </div>
 
 <!-- Modal for amount selection (hidden by default) -->
 <div id="amount-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -602,7 +602,7 @@
         </div>
         
         <div class="flex justify-end">
-            <button id="close-modal" class="text-gray-400 hover:text-white">Cancel</button>
+            <button id="close-amount-modal" class="text-gray-400 hover:text-white">Cancel</button>
         </div>
     </div>
 </div>
@@ -771,6 +771,10 @@
         </div>
         
         <script>
+            // Initialize Stripe
+            const stripe = Stripe('pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO');
+
+            // Main document ready function
             document.addEventListener('DOMContentLoaded', function() {
                 const queryForm = document.getElementById('query-form');
                 const resultsSection = document.getElementById('results');
@@ -803,6 +807,13 @@
                 const whitepaperModal = document.getElementById('whitepaper-modal');
                 const closeModal = document.getElementById('close-modal');
                 const whitepaperContent = document.querySelector('.whitepaper-content');
+                
+                // Donation elements
+                const donateBtn = document.getElementById('donate-btn');
+                const amountModal = document.getElementById('amount-modal');
+                const closeAmountModal = document.getElementById('close-amount-modal');
+                const amountBtns = document.querySelectorAll('.amount-btn');
+                const customBtn = document.getElementById('custom-btn');
                 
                 // Open whitepaper modal
                 whitepaperBtn.addEventListener('click', function() {
@@ -1107,167 +1118,122 @@
                     document.getElementById('query').value = '';
                     document.getElementById('query').focus();
                 });
-            });
-            function updateBatteryStatus() {
-            fetch('/api/credit-status')
-            .then(response => response.json())
-            .then(data => {
-                // Update battery icon
-                const batteryIcon = document.getElementById('credit-battery');
                 
-                // Clear previous classes
-                batteryIcon.className = 'fas';
-                
-                // Add appropriate battery icon class
-                batteryIcon.classList.add(data.icon);
-                
-                // Add appropriate color class
-                if (data.status === 'green') {
-                    batteryIcon.classList.add('text-green-500');
-                } else if (data.status === 'yellow') {
-                    batteryIcon.classList.add('text-yellow-500');
-                } else if (data.status === 'red') {
-                    batteryIcon.classList.add('text-red-500');
-                } else {
-                    batteryIcon.classList.add('text-gray-400');
+                // Battery status update
+                function updateBatteryStatus() {
+                    fetch('/api/credit-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update battery icon
+                        const batteryIcon = document.getElementById('credit-battery');
+                        
+                        // Clear previous classes
+                        batteryIcon.className = 'fas';
+                        
+                        // Add appropriate battery icon class
+                        batteryIcon.classList.add(data.icon);
+                        
+                        // Add appropriate color class
+                        if (data.status === 'green') {
+                            batteryIcon.classList.add('text-green-500');
+                        } else if (data.status === 'yellow') {
+                            batteryIcon.classList.add('text-yellow-500');
+                        } else if (data.status === 'red') {
+                            batteryIcon.classList.add('text-red-500');
+                        } else {
+                            batteryIcon.classList.add('text-gray-400');
+                        }
+                        
+                        // Update tooltip
+                        batteryIcon.title = `API Credits: ${data.percentage}% remaining`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching battery status:', error);
+                        // Set to unknown state
+                        document.getElementById('credit-battery').className = 'fas fa-battery text-gray-400';
+                    });
                 }
                 
-                // Update tooltip
-                batteryIcon.title = `API Credits: ${data.percentage}% remaining`;
-            })
-            .catch(error => {
-                console.error('Error fetching battery status:', error);
-                // Set to unknown state
-                document.getElementById('credit-battery').className = 'fas fa-battery text-gray-400';
-            });
-    }
-
-            // Call on page load and set interval
-            document.addEventListener('DOMContentLoaded', function() {
-                // Add this to your existing DOMContentLoaded function
+                // Call on page load and set interval
                 updateBatteryStatus();
                 
                 // Check battery status every 5 minutes
                 setInterval(updateBatteryStatus, 5 * 60 * 1000);
-            });
-        // Initialize Stripe
-            const stripe = Stripe('pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO');
-
-            // Set up donation functionality
-            document.addEventListener('DOMContentLoaded', function() {
-                const donateBtn = document.getElementById('donate-btn');
-                const amountModal = document.getElementById('amount-modal');
-                const closeAmountModal = document.getElementById('close-amount-modal');
-                const amountBtns = document.querySelectorAll('.amount-btn');
-                const customBtn = document.getElementById('custom-btn');
                 
-                // Show amount selection modal
-                donateBtn.addEventListener('click', function() {
-                    amountModal.classList.remove('hidden');
-                });
-                
-                // Close modal
-                closeAmountModal.addEventListener('click', function() {
-                    amountModal.classList.add('hidden');
-                });
-                
-                // Handle preset amounts
-                amountBtns.forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const amount = parseInt(this.dataset.amount);
-                        createCheckout(amount);
-                    });
-                });
-                
-                // Handle custom amount
-                customBtn.addEventListener('click', function() {
-                    const amount = parseFloat(document.getElementById('custom-amount').value);
-                    if (amount && amount >= 1 && amount <= 10) {
-                        // Convert to cents for Stripe
-                        createCheckout(Math.round(amount * 100));
-                    } else {
-                        alert('Please enter an amount between $1 and $10');
-                    }
-                });
-                
-                // Create Stripe checkout session
-                async function createCheckout(amount) {
-                    try {
-                        amountModal.classList.add('hidden');
-                        
-                        const response = await fetch('/create-checkout-session', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ amount: amount })
-                        });
-                        
-                        const session = await response.json();
-                        
-                        // Redirect to Stripe checkout
-                        const { error } = await stripe.redirectToCheckout({
-                            sessionId: session.id
-                        });
-                        
-                        if (error) {
-                            console.error(error);
-                            alert('Payment error: ' + error.message);
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Something went wrong. Please try again.');
-                    }
-                }
-            });
-            // Donation functionality
+                // Donation functionality
                 if (donateBtn) {
                     donateBtn.addEventListener('click', function() {
-                        // Simple amount selection before checkout
-                        const amount = prompt('Enter donation amount ($1-$10):', '5');
-                        
-                        if (amount) {
-                            const parsedAmount = parseFloat(amount);
-                            
-                            if (!isNaN(parsedAmount) && parsedAmount >= 1 && parsedAmount <= 10) {
-                                // Convert dollars to cents for Stripe
-                                createCheckout(Math.round(parsedAmount * 100));
-                            } else {
-                                alert('Please enter a valid amount between $1 and $10');
-                            }
-                        }
+                        amountModal.classList.remove('hidden');
                     });
                 }
                 
-                // Create Stripe checkout session
-                async function createCheckout(amount) {
-                    try {
-                        const response = await fetch('/create-checkout-session', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ amount: amount })
-                        });
-                        
-                        const session = await response.json();
-                        
-                        if (session.error) {
-                            console.error('Session error:', session.error);
-                            alert('Error: ' + session.error);
-                            return;
-                        }
-                        
-                        // Redirect to Stripe Checkout
-                        const { error } = await stripe.redirectToCheckout({
-                            sessionId: session.id
-                        });
-                        
-                        if (error) {
-                            console.error('Stripe error:', error);
-                            alert('Payment error: ' + error.message);
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Something went wrong. Please try again.');
-                    }
+                // Close amount modal
+                if (closeAmountModal) {
+                    closeAmountModal.addEventListener('click', function() {
+                        amountModal.classList.add('hidden');
+                    });
                 }
+                
+                // Handle preset donation amounts
+                if (amountBtns) {
+                    amountBtns.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const amount = parseInt(this.dataset.amount);
+                            createCheckout(amount);
+                        });
+                    });
+                }
+                
+                // Handle custom donation amount
+                if (customBtn) {
+                    customBtn.addEventListener('click', function() {
+                        const amount = parseFloat(document.getElementById('custom-amount').value);
+                        if (amount && amount >= 1 && amount <= 10) {
+                            // Convert to cents for Stripe
+                            createCheckout(Math.round(amount * 100));
+                        } else {
+                            alert('Please enter an amount between $1 and $10');
+                        }
+                    });
+                }
+            });
+
+            // Create Stripe checkout session
+            async function createCheckout(amount) {
+                try {
+                    const amountModal = document.getElementById('amount-modal');
+                    if (amountModal) {
+                        amountModal.classList.add('hidden');
+                    }
+                    
+                    const response = await fetch('/create-checkout-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: amount })
+                    });
+                    
+                    const session = await response.json();
+                    
+                    if (session.error) {
+                        console.error('Session error:', session.error);
+                        alert('Error: ' + session.error);
+                        return;
+                    }
+                    
+                    // Redirect to Stripe Checkout
+                    const { error } = await stripe.redirectToCheckout({
+                        sessionId: session.id
+                    });
+                    
+                    if (error) {
+                        console.error('Stripe error:', error);
+                        alert('Payment error: ' + error.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Something went wrong. Please try again.');
+                }
+            }
         </script>
         </div>
     </body>

@@ -4,7 +4,9 @@ import os
 import requests
 import json
 import re
+import stripe
 from datetime import datetime
+
 from flask_sslify import SSLify
 from preprocess import preprocess_query
 
@@ -23,6 +25,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+stripe.api_key = STRIPE_SECRET_KEY
 
 # Function to strip markdown formatting
 def strip_markdown(text):
@@ -460,7 +464,61 @@ def trigger_scheduler():
         return jsonify({"status": "success", "message": "Scheduler completed"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-    
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        data = request.get_json()
+        amount = data.get('amount', 500)  # Default to $5.00 if not specified
+        
+        # Create a checkout session with dynamic pricing
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Bullshit Detector Donation',
+                        'description': 'Support truth detection in the age of AI',
+                    },
+                    'unit_amount': amount,  # This is in cents ($1 = 100 cents)
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='https://bullshitdetector.ai/success',
+            cancel_url='https://bullshitdetector.ai/',
+        )
+        
+        return jsonify({'id': session.id})
+        
+    except Exception as e:
+        logging.error(f"Stripe error: {e}")
+        return jsonify({'error': str(e)}), 500
+@app.route('/success')
+def success():
+    return '''
+    <html>
+        <head>
+            <title>Thank You!</title>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; text-align: center; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+                .container { max-width: 600px; padding: 40px; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); }
+                h1 { color: #3b82f6; margin-bottom: 20px; }
+                .link { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Thank You!</h1>
+                <p>Your donation helps keep the Bullshit Detector running.</p>
+                <p>Credits will be restored within 24 hours.</p>
+                <a href="/" class="link">Return to Bullshit Detector</a>
+            </div>
+        </body>
+    </html>
+    '''
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

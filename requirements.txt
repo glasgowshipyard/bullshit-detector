@@ -3,3 +3,4 @@ requests
 nltk
 gunicorn
 flask-sslify
+stripe
