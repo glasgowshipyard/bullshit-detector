@@ -95,21 +95,12 @@
                 transform: translateY(-1px);
                 box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
             }
-
+            /* Touch device focus fix */
+            @media (hover: none) {
             .submit-btn:focus {
-            outline: none; /* Remove default focus outline */
-            }
-
-            .submit-btn:active {
-            transform: translateY(0); /* Reset transform when clicking */
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3); /* Smaller shadow when pressing */
-            }
-
-            /* Fix Firefox-specific focus behavior */
-            @-moz-document url-prefix() {
-            .submit-btn:focus:not(:hover) {
-                transform: translateY(0);
+                transform: none;
                 box-shadow: none;
+                outline: none;
             }
             }
             
