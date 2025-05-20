@@ -101,7 +101,18 @@
                 transform: none;
                 box-shadow: none;
                 outline: none;
+                }
             }
+
+            .submit-btn {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            }
+            .submit-btn:focus {
+            outline: none;
+            }
+            .submit-btn::-moz-focus-inner {
+            border: none;
             }
             
             .confidence-bar {
@@ -1254,5 +1265,11 @@
             }
         </script>
         </div>
+        <!-- Submit button tweak for mobile -->
+        <script>
+            document
+              .querySelector('.submit-btn')
+              .addEventListener('click', e => e.currentTarget.blur());
+        </script>
     </body>
     </html>
