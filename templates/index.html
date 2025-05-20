@@ -515,7 +515,8 @@
                 }
             }
         </style>
-        <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+        <!-- Stripe checkout JS -->
+        <script src="https://js.stripe.com/v3/" async></script>
     </head>
     <body>
         <div class="container mx-auto px-4 py-8">
@@ -568,27 +569,43 @@
                     </form>
                 </div>
             </div>
-            <div class="max-w-4xl mx-auto mb-8">
-                <div class="card rounded-xl p-6 shadow-lg">
-                    <div class="text-center">                        
-                        <!-- Stripe buy button with custom styling container -->
-                        <div class="stripe-donation-container">
-                            <stripe-buy-button
-                                buy-button-id="buy_btn_1RQgGR08JDyCKj5sgjJBIqjH"
-                                publishable-key="pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO"
-                            >
-                            </stripe-buy-button>
-                        </div>
-                        
-                        <div class="donation-notice mt-4">
-                            <p class="text-xs text-gray-500">
-                                <i class="fas fa-clock mr-1"></i>
-                                Credits restored within 24 hours • No queries are tracked or stored
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <!-- Donation section with single button -->
+<div class="max-w-4xl mx-auto mb-8">
+    <button id="donate-btn" class="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all">
+        DONATE
+    </button>
+    
+    <div class="text-center mt-2">
+        <span class="text-sm text-gray-500">
+            <i class="fas fa-clock"></i> Credits restored within 24 hours
+        </span>
+    </div>
+</div>
+
+<!-- Modal for amount selection (hidden by default) -->
+<div id="amount-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Choose donation amount</h3>
+        
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <button class="amount-btn py-3 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold" data-amount="100">$1</button>
+            <button class="amount-btn py-3 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold" data-amount="300">$3</button>
+            <button class="amount-btn py-3 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold" data-amount="500">$5</button>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-2">Custom amount (min $1, max $10):</label>
+            <div class="flex">
+                <input type="number" id="custom-amount" min="1" max="10" step="0.01" class="flex-1 py-2 px-3 bg-gray-700 rounded-l-lg focus:outline-none">
+                <button id="custom-btn" class="bg-blue-500 hover:bg-blue-600 py-2 px-4 rounded-r-lg">Donate</button>
             </div>
+        </div>
+        
+        <div class="flex justify-end">
+            <button id="close-modal" class="text-gray-400 hover:text-white">Cancel</button>
+        </div>
+    </div>
+</div>
             <div id="results" class="max-w-4xl mx-auto hidden">
                 <div class="card rounded-xl p-6 shadow-lg mb-8">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -1133,6 +1150,124 @@
                 // Check battery status every 5 minutes
                 setInterval(updateBatteryStatus, 5 * 60 * 1000);
             });
+        // Initialize Stripe
+            const stripe = Stripe('pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO');
+
+            // Set up donation functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const donateBtn = document.getElementById('donate-btn');
+                const amountModal = document.getElementById('amount-modal');
+                const closeAmountModal = document.getElementById('close-amount-modal');
+                const amountBtns = document.querySelectorAll('.amount-btn');
+                const customBtn = document.getElementById('custom-btn');
+                
+                // Show amount selection modal
+                donateBtn.addEventListener('click', function() {
+                    amountModal.classList.remove('hidden');
+                });
+                
+                // Close modal
+                closeAmountModal.addEventListener('click', function() {
+                    amountModal.classList.add('hidden');
+                });
+                
+                // Handle preset amounts
+                amountBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const amount = parseInt(this.dataset.amount);
+                        createCheckout(amount);
+                    });
+                });
+                
+                // Handle custom amount
+                customBtn.addEventListener('click', function() {
+                    const amount = parseFloat(document.getElementById('custom-amount').value);
+                    if (amount && amount >= 1 && amount <= 10) {
+                        // Convert to cents for Stripe
+                        createCheckout(Math.round(amount * 100));
+                    } else {
+                        alert('Please enter an amount between $1 and $10');
+                    }
+                });
+                
+                // Create Stripe checkout session
+                async function createCheckout(amount) {
+                    try {
+                        amountModal.classList.add('hidden');
+                        
+                        const response = await fetch('/create-checkout-session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ amount: amount })
+                        });
+                        
+                        const session = await response.json();
+                        
+                        // Redirect to Stripe checkout
+                        const { error } = await stripe.redirectToCheckout({
+                            sessionId: session.id
+                        });
+                        
+                        if (error) {
+                            console.error(error);
+                            alert('Payment error: ' + error.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Something went wrong. Please try again.');
+                    }
+                }
+            });
+            // Donation functionality
+                if (donateBtn) {
+                    donateBtn.addEventListener('click', function() {
+                        // Simple amount selection before checkout
+                        const amount = prompt('Enter donation amount ($1-$10):', '5');
+                        
+                        if (amount) {
+                            const parsedAmount = parseFloat(amount);
+                            
+                            if (!isNaN(parsedAmount) && parsedAmount >= 1 && parsedAmount <= 10) {
+                                // Convert dollars to cents for Stripe
+                                createCheckout(Math.round(parsedAmount * 100));
+                            } else {
+                                alert('Please enter a valid amount between $1 and $10');
+                            }
+                        }
+                    });
+                }
+                
+                // Create Stripe checkout session
+                async function createCheckout(amount) {
+                    try {
+                        const response = await fetch('/create-checkout-session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ amount: amount })
+                        });
+                        
+                        const session = await response.json();
+                        
+                        if (session.error) {
+                            console.error('Session error:', session.error);
+                            alert('Error: ' + session.error);
+                            return;
+                        }
+                        
+                        // Redirect to Stripe Checkout
+                        const { error } = await stripe.redirectToCheckout({
+                            sessionId: session.id
+                        });
+                        
+                        if (error) {
+                            console.error('Stripe error:', error);
+                            alert('Payment error: ' + error.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Something went wrong. Please try again.');
+                    }
+                }
         </script>
         </div>
     </body>
