@@ -606,7 +606,7 @@
         <div class="mb-6">
             <label class="block text-sm font-medium mb-2">Custom amount (min $1, max $10):</label>
             <div class="flex">
-                <input type="number" id="custom-amount" class="flex-1 py-2 px-3 bg-gray-700 rounded-l-lg focus:outline-none">
+                <input type="number" id="custom-amount" min="1" max="10" step="1" class="flex-1 py-2 px-3 bg-gray-700 rounded-l-lg focus:outline-none">
                 <button id="custom-btn" class="bg-blue-500 hover:bg-blue-600 py-2 px-4 rounded-r-lg">Donate</button>
             </div>
         </div>
