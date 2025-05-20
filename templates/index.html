@@ -263,6 +263,34 @@
                 display: inline-block;
             }
 
+            /* Stripe Donations Section */
+
+            .donation-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 0.75rem;
+        }
+
+        /* Light mode adjustments for donation section */
+        .light-mode .stripe-donation-container {
+            --primary-color: var(--accent-primary);
+            --background-color: var(--card-bg);
+            --text-color: var(--text-primary);
+        }
+
+        .donation-notice {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .donation-notice p {
+            margin: 0;
+            font-style: italic;
+        }
+
             /* Whitepaper button - Desktop */
             .whitepaper-btn {
                 position: fixed;
@@ -487,6 +515,7 @@
                 }
             }
         </style>
+        <script async src="https://js.stripe.com/v3/buy-button.js"></script>
     </head>
     <body>
         <div class="container mx-auto px-4 py-8">
@@ -539,15 +568,27 @@
                     </form>
                 </div>
             </div>
-            <script async
-  src="https://js.stripe.com/v3/buy-button.js">
-</script>
-<stripe-buy-button
-  buy-button-id="buy_btn_1RQgGR08JDyCKj5sgjJBIqjH"
-  publishable-key="pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO"
->
-</stripe-buy-button>
-            
+            <div class="max-w-4xl mx-auto mb-8">
+                <div class="card rounded-xl p-6 shadow-lg">
+                    <div class="text-center">                        
+                        <!-- Stripe buy button with custom styling container -->
+                        <div class="stripe-donation-container">
+                            <stripe-buy-button
+                                buy-button-id="buy_btn_1RQgGR08JDyCKj5sgjJBIqjH"
+                                publishable-key="pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO"
+                            >
+                            </stripe-buy-button>
+                        </div>
+                        
+                        <div class="donation-notice mt-4">
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-clock mr-1"></i>
+                                Credits restored within 24 hours • No queries are tracked or stored
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="results" class="max-w-4xl mx-auto hidden">
                 <div class="card rounded-xl p-6 shadow-lg mb-8">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
