@@ -1271,9 +1271,17 @@
         </div>
         <!-- Submit button tweak for mobile -->
         <script>
-            document
-              .querySelector('.submit-btn')
-              .addEventListener('click', e => e.currentTarget.blur());
+            document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.querySelector('.submit-btn');
+
+            btn.addEventListener('click', e => {
+                setTimeout(() => btn.blur(), 100);
+            });
+
+            btn.addEventListener('touchend', () => {
+                setTimeout(() => btn.blur(), 100);
+            });
+            });
         </script>
     </body>
     </html>
