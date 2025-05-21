@@ -88,30 +88,46 @@
             /* Begin submit button */
             .submit-btn {
             background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-            border: 2px solid transparent;             /* Prevent layout shift on focus */
-            box-sizing: border-box;                    /* Ensure borders don’t affect layout */
-            -webkit-tap-highlight-color: transparent;  /* Remove iOS highlight */
-            touch-action: manipulation;                /* Optimise touch response */
-            transition: all 0.3s ease;
+            border: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            position: relative;
+            overflow: hidden;
             }
 
-            /* Suppress focus outline globally */
-            .submit-btn:hover,
+            /* Active/pressed state - subtle dimming effect */
             .submit-btn:active {
-            transform: scale(0.97);
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+            opacity: 0.8;
             }
 
-            /* Only show border on keyboard nav */
-            .submit-btn:focus-visible {
-            border-color: var(--accent-primary);
+            /* Add ripple effect on click with pseudo-element */
+            .submit-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
             }
 
-            /* Touch device override: remove hover transforms on tap focus */
-            @media (hover: none) {
-            .submit-btn:focus {
-                transform: none;
-                box-shadow: none;
+            .submit-btn:active::after {
+            opacity: 1;
+            animation: ripple 0.4s ease-out;
+            }
+
+            @keyframes ripple {
+            0% {
+                transform: scale(0, 0) translate(-50%, -50%);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20) translate(-50%, -50%);
+                opacity: 0;
             }
             }
             /* End submit button */
@@ -1266,19 +1282,5 @@
             }
         </script>
         </div>
-        <!-- Submit button tweak for mobile -->
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.querySelector('.submit-btn');
-
-            btn.addEventListener('click', e => {
-                setTimeout(() => btn.blur(), 100);
-            });
-
-            btn.addEventListener('touchend', () => {
-                setTimeout(() => btn.blur(), 100);
-            });
-            });
-        </script>
     </body>
     </html>
