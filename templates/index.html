@@ -88,47 +88,12 @@
             /* Begin submit button */
             .submit-btn {
             background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-            border: none;
             -webkit-tap-highlight-color: transparent;
-            transition: background-color 0.2s ease, opacity 0.2s ease;
-            position: relative;
-            overflow: hidden;
             }
 
-            /* Active/pressed state - subtle dimming effect */
+            /* Simple opacity change on press, no transforms */
             .submit-btn:active {
             opacity: 0.8;
-            }
-
-            /* Add ripple effect on click with pseudo-element */
-            .submit-btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.7);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%, -50%);
-            transform-origin: 50% 50%;
-            }
-
-            .submit-btn:active::after {
-            opacity: 1;
-            animation: ripple 0.4s ease-out;
-            }
-
-            @keyframes ripple {
-            0% {
-                transform: scale(0, 0) translate(-50%, -50%);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(20, 20) translate(-50%, -50%);
-                opacity: 0;
-            }
             }
             /* End submit button */
 
