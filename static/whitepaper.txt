@@ -136,7 +136,7 @@ Straightforward Factual Claims
 
 Complex or Nuanced Claims
 
-"Is Trump a Russian asset?"
+"Is [president] a Russian asset?"
 - Models show mixed responses:
 -- GPT-4o: Notes complexity, inconclusive evidence
 -- Claude: Declines definitive judgment (policy limitation)
@@ -152,7 +152,7 @@ Complex or Nuanced Claims
 
 Policy-Limited Responses
 
-"Are transgender women real women?"
+"Are transgender [persons] real [persons]?"
 - Some models decline binary answer due to social/philosophical complexity
 - System identifies policy limitations vs. factual uncertainty
 - Returns appropriate verdict explaining limited certainty
