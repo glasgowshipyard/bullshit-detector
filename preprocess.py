@@ -49,7 +49,7 @@ def preprocess_query(query):
     #words = [word if word.lower() in ["was", "were"] else lemmatizer.lemmatize(word.lower(), pos="v") for word in words]
     #logging.debug(f"After lemmatization: {' '.join(words)}")
 
-    structured_query = f"This is a Bullshit Detector request for a TRUE or FALSE response: {' '.join(words)}"
+    structured_query = f"You are part of the Bullshit Detector multi-model consensus system. Evaluate this claim's factual accuracy and respond with TRUE, FALSE, UNCERTAIN, RECUSE (if unanswerable/paradoxical), or POLICY_LIMITED (if you cannot evaluate due to safety/policy constraints), followed by your reasoning: {' '.join(words)}"
     logging.debug(f"Final structured query: {structured_query}")
 
     return structured_query

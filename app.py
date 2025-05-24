@@ -45,6 +45,46 @@ def strip_markdown(text):
     text = re.sub(r'`(.*?)`', r'\1', text)
     return text
 
+# Detect recusals and policy limitations
+def detect_recusal(content):
+    """
+    Detect if a model is recusing itself from judgment due to paradox, 
+    philosophical objection, or unanswerable nature of the question
+    """
+    recusal_patterns = [
+        r"\brecuse\b",
+        r"\bparadox\b", 
+        r"\bself-referential\b",
+        r"\bcannot be definitively labeled\b",
+        r"\binherently unanswerable\b",
+        r"\bphilosophical\b.*\bobjection\b",
+        r"\bcategory error\b",
+        r"\bunanswerable by design\b"
+    ]
+    
+    content_lower = content.lower()
+    return any(re.search(pattern, content_lower) for pattern in recusal_patterns)
+
+def detect_policy_limitation(content):
+    """
+    Detect if a model is declining to answer due to policy constraints
+    rather than factual uncertainty
+    """
+    policy_patterns = [
+        r"\bpolicy_limited\b",
+        r"\bi (don't|do not) feel comfortable\b",
+        r"\bi apologize.*cannot\b",
+        r"\bnot appropriate to discuss\b",
+        r"\brecommend consulting\b",
+        r"\bwould suggest referring to\b",
+        r"\bplease consult official sources\b",
+        r"\bit's important to rely on\b",
+        r"\bi'm not comfortable speculating\b"
+    ]
+    
+    content_lower = content.lower()
+    return any(re.search(pattern, content_lower) for pattern in policy_patterns)
+
 # Function to query different AI models
 def query_model(model_name, prompt):
     """
@@ -235,14 +275,21 @@ def analyze_responses(responses):
         if not (response["success"] and response["content"]):
             continue
             
+        # Check for explicit opt-outs first
+        if detect_recusal(response["content"]):
+            judgments[model] = "RECUSE"
+            continue
+            
+        if detect_policy_limitation(response["content"]):
+            judgments[model] = "POLICY_LIMITED"
+            policy_limited_responses.append(model)
+            continue
+        
         content = response["content"].upper()
         text = response["content"].lower()
         
         # Check for uncertainty indicators
         uncertain = any(pattern in text for pattern in uncertainty_patterns)
-        
-        # Check if response appears to be policy-limited rather than factually uncertain
-        policy_limited = any(pattern in text for pattern in policy_patterns)
         
         # Extract explicit judgments
         if "FALSE" in content and not ("NOT FALSE" in content or "ISN'T FALSE" in content):
@@ -281,14 +328,14 @@ def analyze_responses(responses):
             judgments[model] = "UNCERTAIN"
             uncertain_responses.append(model)
     
-    # Count different judgments
+    # Count different judgments - exclude RECUSE and POLICY_LIMITED
+    substantive_judgments = {k: v for k, v in judgments.items() if v not in ["RECUSE", "POLICY_LIMITED"]}
     judgment_counts = {"TRUE": 0, "FALSE": 0, "UNCERTAIN": 0}
-    for judgment in judgments.values():
+    for judgment in substantive_judgments.values():
         judgment_counts[judgment] += 1
-    
+
     # Determine the majority verdict
-    # If UNCERTAIN count is significant (1/3 or more), prioritize it
-    total_models = len(judgments)
+    total_models = len(substantive_judgments)
     if judgment_counts["UNCERTAIN"] >= (total_models / 3) or judgment_counts["UNCERTAIN"] >= 2:
         majority_verdict = "UNCERTAIN"
     else:
