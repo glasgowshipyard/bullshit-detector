@@ -1,16 +1,13 @@
-Bullshit Detector Whitepaper
-=============================
+// Bullshit Detector Whitepaper
 
-Executive Summary
-----------------
+/// Executive Summary
 
 - Misinformation proliferates rapidly, undermining trust and clarity in public discourse
 - Bullshit Detector tackles misinformation by leveraging consensus across multiple AI models
 - System provides rapid verification with transparent confidence indicators
 - Approach focuses on epistemic humility while still providing actionable insights
 
-The Problem
------------
+/// The Problem
 
 - Misinformation is cheaply produced but costly to debunk (Brandolini's Law)
 - Human-created misinformation remains the primary concern and most damaging vector
@@ -20,8 +17,7 @@ The Problem
 - Single-model detection systems are prone to biases and inconsistencies
 - Urgent need for neutral, rapid detection systems that appropriately express uncertainty
 
-Approach
---------
+/// Approach
 
 - Aggregate responses from multiple language models (GPT-4o, Claude 3, Mistral, DeepSeek)
 - Each model comes from a different lab with different training methodologies
@@ -31,8 +27,7 @@ Approach
 - System differentiates between genuine uncertainty and policy-based hesitations
 - Transparent communication of confidence levels rather than false certainty
 
-Methodology
------------
+/// Methodology
 
 Input Processing
 - Queries undergo preprocessing via NLP techniques:
@@ -43,25 +38,26 @@ Input Processing
 
 Multi-Model Querying
 - Each model queried independently with the preprocessed claim
-- Models asked to provide TRUE, FALSE, or UNCERTAIN judgments with reasoning
+- Models asked to provide TRUE, FALSE, UNCERTAIN, RECUSE, or POLICY_LIMITED judgments with reasoning
 - Responses analyzed for both explicit judgments and implicit leanings
-- System identifies policy limitations vs. factual uncertainty
+- System automatically detects recusals and policy limitations using pattern matching
 
 Consensus Analysis
 - Responses analyzed through a simple but effective consensus algorithm
 - Explicit judgments given higher weight than implicit leanings
-- Policy hesitations ("I'm not comfortable answering") handled differently from factual uncertainty
+- RECUSE and POLICY_LIMITED responses excluded from substantive judgment counting
+- Only TRUE, FALSE, and UNCERTAIN verdicts contribute to consensus calculation
 - Multiple models expressing uncertainty prioritized over weak TRUE/FALSE consensus
 - Contradictions appropriately reduce confidence levels
 
 Output Presentation
-- Results presented with clear TRUE, FALSE, or UNCERTAIN verdicts
+- Results presented with clear TRUE, FALSE, UNCERTAIN, RECUSE, or POLICY_LIMITED verdicts
 - Confidence levels visually indicated through color coding and text labels
 - Individual model responses shown in full for transparency
+- RECUSE and POLICY_LIMITED responses displayed but excluded from consensus
 - Failed responses gracefully omitted without disrupting analysis
 
-Technical Architecture
-----------------------
+/// Technical Architecture
 
 - Flask backend deployed on Heroku with web and worker dynos
 - Integration with multiple AI providers:
@@ -73,14 +69,15 @@ Technical Architecture
 - Responsive UI adapting to system light/dark mode preferences
 - Mobile-friendly design with accessibility considerations
 
-Confidence Algorithm
---------------------
+/// Confidence Algorithm
 
 Judgment Extraction
-- System extracts TRUE/FALSE/UNCERTAIN judgments from each response
+- System extracts TRUE/FALSE/UNCERTAIN/RECUSE/POLICY_LIMITED judgments from each response
 - Identifies explicit judgments ("This is FALSE") and implicit indicators
-- Detects policy-limited responses vs. factual uncertainty
-- Recognizes patterns indicating genuine epistemic limitations
+- Automated pattern matching detects recusals and policy limitations
+- RECUSE: Model declines due to paradox, philosophical objection, or unanswerable nature
+- POLICY_LIMITED: Model declines due to safety policies or comfort constraints
+- Recognizes patterns indicating genuine epistemic limitations vs. policy constraints
 
 Policy vs. Factual Uncertainty
 - Distinguishes between policy constraints and factual uncertainty
@@ -89,12 +86,14 @@ Policy vs. Factual Uncertainty
 - Policy limitations factored differently in confidence calculations
 
 Confidence Calculation
-- Base confidence derived from proportion of models agreeing with majority verdict
+- Base confidence derived from proportion of substantive models agreeing with majority verdict
+- RECUSE and POLICY_LIMITED responses excluded from confidence calculation
+- Only TRUE, FALSE, and UNCERTAIN judgments count toward consensus
 - Adjustments based on:
--- Policy-limited responses implying agreement with majority add modest confidence
 -- Models expressing genuine uncertainty reduce confidence
--- UNCERTAIN verdicts have capped confidence
--- Contradictions between models reduce confidence
+-- UNCERTAIN verdicts have capped confidence (maximum 70%)
+-- Contradictions between substantive models reduce confidence
+-- Fewer substantive responses reduce overall confidence
 
 Confidence Thresholds
 - VERY HIGH (90-100%): Near-unanimous agreement, minimal uncertainty
@@ -103,8 +102,9 @@ Confidence Thresholds
 - LOW (30-49%): Weak agreement with substantial uncertainty
 - VERY LOW (<30%): No clear consensus or predominantly uncertain
 
-Brandolini's Law: Cognitive to Environmental Cost
--------------------------------------------------
+/// Brandolini's Law: Cognitive to Environmental Cost
+
+Brandolini's Law (also known as the Bullshit Asymmetry Principle) states that "The amount of energy needed to refute bullshit is an order of magnitude larger than that needed to produce it."
 
 !! The energy cost of verification is now significantly higher than misinformation generation
 
@@ -124,8 +124,7 @@ The Bullshit Detector addresses this by:
 3. Providing appropriate confidence rather than over-analyzing borderline cases
 4. Preserving human cognitive resources through clear communication
 
-Example Evaluations
--------------------
+/// Example Evaluations
 
 Straightforward Factual Claims
 
@@ -141,7 +140,7 @@ Straightforward Factual Claims
 
 Complex or Nuanced Claims
 
-"Is Trump a Russian asset?"
+"Is [president] a Russian asset?"
 - Models show mixed responses:
 -- GPT-4o: Notes complexity, inconclusive evidence
 -- Claude: Declines definitive judgment (policy limitation)
@@ -155,24 +154,34 @@ Complex or Nuanced Claims
 - System returns: UNCERTAIN (HIGH Confidence)
 - High confidence in uncertainty correctly represents expert disagreement
 
-Policy-Limited Responses
+Policy-Limited and Recusal Examples
 
-"Are transgender women real women?"
-- Some models decline binary answer due to social/philosophical complexity
-- System identifies policy limitations vs. factual uncertainty
-- Returns appropriate verdict explaining limited certainty
+"Are transgender [persons] real [persons]?"
+- Models decline binary answer due to social/philosophical complexity
+- System returns: POLICY_LIMITED or RECUSE depending on reasoning
+- Response explains why question cannot be answered within policy constraints
 
-Limitations & Edge Cases
-------------------------
+"This statement is false"
+- Self-referential paradox cannot be meaningfully evaluated
+- System returns: RECUSE (HIGH Confidence)
+- Recognizes logical paradox and appropriately abstains from judgment
 
-- Policy-based refusals explicitly identified rather than counting as uncertainty
+"Should I invest in cryptocurrency?"
+- Models decline to provide financial advice due to policy constraints
+- System returns: POLICY_LIMITED
+- Distinguishes policy limitation from factual evaluation of cryptocurrency claims
+
+/// Limitations & Edge Cases
+
+- RECUSE and POLICY_LIMITED detection relies on pattern matching of common phrases
+- Edge cases may be misclassified between POLICY_LIMITED and genuine uncertainty
 - Preprocessing may struggle with intentionally obfuscated phrasing
 - System depends on external APIs, creating potential points of failure
 - Training cutoff dates may lead to inconsistent access to recent events
 - Environmental impact of running multiple AI models must be balanced against benefits
+- Fewer substantive responses (due to recusals/policy limits) reduce confidence reliability
 
-Future Improvements
--------------------
+/// Future Improvements
 
 - Enhanced preprocessing with semantic analysis for greater precision
 - Adversarial prompt detection to minimize manipulation attempts
@@ -182,8 +191,7 @@ Future Improvements
 - Citation retrieval to support model claims with primary sources
 - Optional user accounts to track verification history
 
-Conclusion
-----------
+/// Conclusion
 
 The Bullshit Detector is not designed to determine absolute truth, but to:
 
