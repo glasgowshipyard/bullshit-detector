@@ -80,6 +80,13 @@
                 transition: all 0.3s ease;
                 font-size: 16px;
             }
+
+            .input-field {
+            min-height: 3rem;
+            max-height: 200px; /* max input field height */
+            line-height: 1.5;
+            resize: none;
+}
             
             .input-field:focus {
                 border-color: var(--accent-primary);
@@ -557,15 +564,15 @@
                         <div>
                             <label for="query" class="block text-sm font-medium text-gray-400 mb-2">Enter a claim to verify</label>
                             <div class="relative">
-                                <input 
-                                    type="text" 
-                                    id="query" 
-                                    name="query" 
-                                    class="input-field w-full py-3 px-4 rounded-lg focus:outline-none" 
-                                    placeholder="Ex: Was the moon landing faked?"
-                                    autocomplete="off"
-                                    required
-                                >
+                                <textarea 
+                                id="query" 
+                                name="query" 
+                                class="input-field w-full py-3 px-4 rounded-lg focus:outline-none resize-none overflow-hidden" 
+                                placeholder="Ex: Was the moon landing faked?"
+                                autocomplete="off"
+                                required
+                                rows="1"
+                            ></textarea>
                                 <button 
                                     type="submit" 
                                     class="submit-btn absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg px-4 py-1 text-white font-medium"
@@ -812,6 +819,20 @@
                 const themeToggle = document.getElementById('theme-toggle');
                 const moonIcon = document.getElementById('moon-icon');
                 const sunIcon = document.getElementById('sun-icon');
+
+                // Auto-expanding textarea
+                const textarea = document.getElementById('query');
+                textarea.addEventListener('input', function() {
+                    // Reset height to auto to get the correct scrollHeight
+                    this.style.height = 'auto';
+                    // Set height to scrollHeight (content height)
+                    this.style.height = this.scrollHeight + 'px';
+                });
+
+                // Reset on form submission
+                document.getElementById('query-form').addEventListener('submit', function() {
+                    textarea.style.height = 'auto';
+                });
                 
                 // Whitepaper modal elements
                 const whitepaperBtn = document.getElementById('whitepaper-btn');
@@ -1245,6 +1266,7 @@
                     alert('Something went wrong. Please try again.');
                 }
             }
+            
         </script>
         </div>
     </body>
