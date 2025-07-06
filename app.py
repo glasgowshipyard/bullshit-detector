@@ -102,9 +102,9 @@ def query_model(model_name, prompt):
             - error: Error message (if success is False)
     """
     try:
-        if model_name == "gpt-4.1":
+        if model_name == "gpt-4o":
             headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-            payload = {"model": "gpt-4.1", "messages": [{"role": "user", "content": prompt}]}
+            payload = {"model": "gpt-4o", "messages": [{"role": "user", "content": prompt}]}
             endpoint = "https://api.openai.com/v1/chat/completions"
 
             response = requests.post(endpoint, json=payload, headers=headers)
@@ -113,11 +113,11 @@ def query_model(model_name, prompt):
             return {
                 "success": True,
                 "content": response_json["choices"][0]["message"]["content"],
-                "model": "gpt-4.1",
+                "model": "gpt-4o",
                 "error": None
             }
         
-        elif model_name == "claude-3-7":
+        elif model_name == "claude-3-5":
             try:
                 headers = {
                     "x-api-key": CLAUDE_API_KEY, 
@@ -125,7 +125,7 @@ def query_model(model_name, prompt):
                     "anthropic-version": "2023-06-01"
                 }
                 payload = {
-                    "model": "claude-3-7-sonnet-latest",
+                    "model": "claude-3-5-sonnet-20241022",
                     "max_tokens": 1000,
                     "messages": [{"role": "user", "content": prompt}]
                 }
@@ -145,22 +145,22 @@ def query_model(model_name, prompt):
                     # Check for alternative response structures
                     if "content" in response_json and isinstance(response_json["content"], list):
                         content = response_json["content"][0]["text"]
-                        return {"success": True, "content": content, "model": "claude-3-7", "error": None}
+                        return {"success": True, "content": content, "model": "claude-3-5", "error": None}
                     elif "message" in response_json:
-                        return {"success": True, "content": str(response_json["message"]), "model": "claude-3-7", "error": None}
+                        return {"success": True, "content": str(response_json["message"]), "model": "claude-3-5", "error": None}
                     else:
                         return {
                             "success": False,
                             "content": str(response_json)[:200] + "...",
-                            "model": "claude-3-7",
+                            "model": "claude-3-5",
                             "error": "Could not locate content in response"
                         }
                 except ValueError as e:
                     logging.error(f"Claude API returned non-JSON response: {response.text[:200]}...")
-                    return {"success": False, "content": None, "model": "claude-3-7", "error": f"Non-JSON response: {str(e)}"}
+                    return {"success": False, "content": None, "model": "claude-3-5", "error": f"Non-JSON response: {str(e)}"}
             except Exception as e:
                 logging.error(f"Error in Claude API request: {str(e)}")
-                return {"success": False, "content": None, "model": "claude-3-7", "error": str(e)}
+                return {"success": False, "content": None, "model": "claude-3-5", "error": str(e)}
 
         elif model_name == "mistral":
             try:
@@ -430,8 +430,8 @@ def ask():
 
         # Get responses from models
         responses = {}
-        responses["gpt-4.1"] = query_model("gpt-4.1", structured_query)
-        responses["claude-3-7"] = query_model("claude-3-7", structured_query)
+        responses["gpt-4o"] = query_model("gpt-4o", structured_query)
+        responses["claude-3-5"] = query_model("claude-3-5", structured_query)
         responses["mistral"] = query_model("mistral", structured_query)
         responses["deepseek"] = query_model("deepseek", structured_query)
         
