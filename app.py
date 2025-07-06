@@ -125,7 +125,7 @@ def query_model(model_name, prompt):
                     "anthropic-version": "2023-06-01"
                 }
                 payload = {
-                    "model": "claude-3-5-sonnet-20241022",
+                    "model": "claude-3-5-sonnet-latest",
                     "max_tokens": 1000,
                     "messages": [{"role": "user", "content": prompt}]
                 }
