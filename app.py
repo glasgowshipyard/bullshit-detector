@@ -85,6 +85,20 @@ def detect_policy_limitation(content):
     content_lower = content.lower()
     return any(re.search(pattern, content_lower) for pattern in policy_patterns)
 
+# Function to detect if query needs web search
+def needs_web_search(query):
+    """
+    Detect if query needs current/recent information
+    """
+    temporal_indicators = [
+        "2025", "2024", "current", "latest", "recent", "now", "today", 
+        "this year", "election", "stock", "weather", "news",
+        "january 2025", "february 2025", "march 2025", "april 2025",
+        "may 2025", "june 2025", "july 2025"
+    ]
+    query_lower = query.lower()
+    return any(indicator in query_lower for indicator in temporal_indicators)
+
 # Function to query different AI models
 def query_model(model_name, prompt):
     """
@@ -125,10 +139,17 @@ def query_model(model_name, prompt):
                     "anthropic-version": "2023-06-01"
                 }
                 payload = {
-                    "model": "claude-3-5-sonnet-latest",
+                    "model": "claude-3-5-sonnet-20241022",
                     "max_tokens": 1000,
                     "messages": [{"role": "user", "content": prompt}]
                 }
+                
+                # Add web search tool if query needs current information
+                if needs_web_search(prompt):
+                    payload["tools"] = [{
+                        "type": "web_search_20250305",
+                        "name": "web_search"
+                    }]
                 endpoint = "https://api.anthropic.com/v1/messages"
                 
                 # Log what we're sending
@@ -144,8 +165,30 @@ def query_model(model_name, prompt):
                     
                     # Check for alternative response structures
                     if "content" in response_json and isinstance(response_json["content"], list):
-                        content = response_json["content"][0]["text"]
-                        return {"success": True, "content": content, "model": "claude-3-5", "error": None}
+                        # Extract text content and any web search sources
+                        content_blocks = response_json["content"]
+                        text_content = ""
+                        sources = []
+                        used_web_search = False
+                        
+                        for block in content_blocks:
+                            if block.get("type") == "text":
+                                text_content += block.get("text", "")
+                            elif block.get("type") == "tool_use" and block.get("name") == "web_search":
+                                used_web_search = True
+                        
+                        # Check for search results in response
+                        if "usage" in response_json and "search_queries" in response_json.get("usage", {}):
+                            used_web_search = True
+                        
+                        return {
+                            "success": True, 
+                            "content": text_content, 
+                            "model": "claude-3-5", 
+                            "error": None,
+                            "used_web_search": used_web_search,
+                            "sources": sources
+                        }
                     elif "message" in response_json:
                         return {"success": True, "content": str(response_json["message"]), "model": "claude-3-5", "error": None}
                     else:
