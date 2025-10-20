@@ -9,6 +9,7 @@ from datetime import datetime
 
 from flask_sslify import SSLify
 from preprocess import preprocess_query
+from model_registry import get_provider_config, get_value_at_path
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, 
@@ -20,11 +21,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 # Force SSL
 sslify = SSLify(app, permanent=True)
 
-# Load API keys from environment variables
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+# Load Stripe API key (others are loaded by model_registry)
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
 
@@ -86,14 +83,14 @@ def detect_policy_limitation(content):
     return any(re.search(pattern, content_lower) for pattern in policy_patterns)
 
 # Function to query different AI models
-def query_model(model_name, prompt):
+def query_model(provider_name, prompt):
     """
-    Generic function to query any supported AI model
-    
+    Query an AI model provider using the model registry.
+
     Args:
-        model_name (str): Identifier for the model to use ("gpt-4o", "claude-3", etc.)
+        provider_name (str): Provider identifier ("openai", "anthropic", "mistral", "deepseek")
         prompt (str): The preprocessed query to send
-        
+
     Returns:
         dict: Standardized response with keys:
             - success: Boolean indicating if the request succeeded
@@ -102,139 +99,85 @@ def query_model(model_name, prompt):
             - error: Error message (if success is False)
     """
     try:
-        if model_name == "gpt-4o":
-            headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-            payload = {"model": "gpt-4o", "messages": [{"role": "user", "content": prompt}]}
-            endpoint = "https://api.openai.com/v1/chat/completions"
+        # Get provider configuration from registry
+        config = get_provider_config(provider_name)
 
-            response = requests.post(endpoint, json=payload, headers=headers)
-            response_json = response.json()
-
-            return {
-                "success": True,
-                "content": response_json["choices"][0]["message"]["content"],
-                "model": "gpt-4o",
-                "error": None
-            }
-        
-        elif model_name == "claude-3":
-            try:
-                headers = {
-                    "x-api-key": CLAUDE_API_KEY, 
-                    "Content-Type": "application/json",
-                    "anthropic-version": "2023-06-01"
-                }
-                payload = {
-                    "model": "claude-3-opus-20240229",
-                    "max_tokens": 1000,
-                    "messages": [{"role": "user", "content": prompt}]
-                }
-                endpoint = "https://api.anthropic.com/v1/messages"
-                
-                # Log what we're sending
-                logging.debug(f"Sending to Claude API: endpoint={endpoint}")
-                
-                response = requests.post(endpoint, json=payload, headers=headers)
-
-                # Log response metadata
-                logging.debug(f"Claude API status code: {response.status_code}")
-                
-                try:
-                    response_json = response.json()
-                    
-                    # Check for alternative response structures
-                    if "content" in response_json and isinstance(response_json["content"], list):
-                        content = response_json["content"][0]["text"]
-                        return {"success": True, "content": content, "model": "claude-3", "error": None}
-                    elif "message" in response_json:
-                        return {"success": True, "content": str(response_json["message"]), "model": "claude-3", "error": None}
-                    else:
-                        return {
-                            "success": False,
-                            "content": str(response_json)[:200] + "...",
-                            "model": "claude-3",
-                            "error": "Could not locate content in response"
-                        }
-                except ValueError as e:
-                    logging.error(f"Claude API returned non-JSON response: {response.text[:200]}...")
-                    return {"success": False, "content": None, "model": "claude-3", "error": f"Non-JSON response: {str(e)}"}
-            except Exception as e:
-                logging.error(f"Error in Claude API request: {str(e)}")
-                return {"success": False, "content": None, "model": "claude-3", "error": str(e)}
-
-        elif model_name == "mistral":
-            try:
-                headers = {"Authorization": f"Bearer {MISTRAL_API_KEY}", "Content-Type": "application/json"}
-                payload = {
-                    "model": "mistral-large-latest",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,  # Lower temp for more factual responses
-                    "max_tokens": 800
-                }
-                endpoint = "https://api.mistral.ai/v1/chat/completions"
-                
-                logging.debug(f"Sending to Mistral API: endpoint={endpoint}")
-                
-                response = requests.post(endpoint, json=payload, headers=headers)
-                logging.debug(f"Mistral API status code: {response.status_code}")
-                
-                response_json = response.json()
-                
-                return {
-                    "success": True,
-                    "content": response_json["choices"][0]["message"]["content"],
-                    "model": "mistral",
-                    "error": None
-                }
-            except Exception as e:
-                logging.error(f"Error in Mistral API request: {str(e)}")
-                return {"success": False, "content": None, "model": "mistral", "error": str(e)}
-        
-        elif model_name == "deepseek":
-            try:
-                headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
-                payload = {
-                    "model": "deepseek-chat",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1
-                }
-                endpoint = "https://api.deepseek.com/v1/chat/completions"
-                
-                logging.debug(f"Sending to DeepSeek API: endpoint={endpoint}")
-                
-                response = requests.post(endpoint, json=payload, headers=headers)
-                logging.debug(f"DeepSeek API status code: {response.status_code}")
-                
-                response_json = response.json()
-                
-                # Get content and strip markdown formatting
-                content = response_json["choices"][0]["message"]["content"]
-                content = strip_markdown(content)  # Strip markdown for consistency with other models
-                
-                return {
-                    "success": True,
-                    "content": content,
-                    "model": "deepseek",
-                    "error": None
-                }
-            except Exception as e:
-                logging.error(f"Error in DeepSeek API request: {str(e)}")
-                return {"success": False, "content": None, "model": "deepseek", "error": str(e)}
-
-        else:
+        if not config:
             return {
                 "success": False,
                 "content": None,
-                "model": model_name,
-                "error": f"Unsupported model: {model_name}"
+                "model": provider_name,
+                "error": f"Unknown provider: {provider_name}"
             }
-    
-    except Exception as e:
-        logging.error(f"Error querying {model_name}: {e}")
+
+        endpoint = config["endpoint"]
+        headers = config["headers_fn"]()
+        model_id = config["model_id"]
+        payload = config["payload_fn"](model_id, prompt)
+        response_path = config["response_path"]
+
+        logging.debug(f"Querying {provider_name} with model {model_id}")
+
+        # Make the API call with timeout
+        response = requests.post(endpoint, json=payload, headers=headers, timeout=30)
+        logging.debug(f"{provider_name} API status code: {response.status_code}")
+
+        if response.status_code != 200:
+            error_msg = response.text[:200] if response.text else f"HTTP {response.status_code}"
+            logging.error(f"Error from {provider_name}: {error_msg}")
+            return {
+                "success": False,
+                "content": None,
+                "model": provider_name,
+                "error": f"API returned {response.status_code}"
+            }
+
+        try:
+            response_json = response.json()
+        except ValueError as e:
+            logging.error(f"{provider_name} returned non-JSON response: {response.text[:200]}")
+            return {
+                "success": False,
+                "content": None,
+                "model": provider_name,
+                "error": f"Non-JSON response: {str(e)}"
+            }
+
+        # Extract content using the provider's response path
+        try:
+            content = get_value_at_path(response_json, response_path)
+            content = strip_markdown(content)  # Normalize formatting
+
+            return {
+                "success": True,
+                "content": content,
+                "model": provider_name,
+                "error": None
+            }
+        except (KeyError, IndexError, TypeError) as e:
+            logging.error(f"Could not extract content from {provider_name} response: {e}")
+            logging.debug(f"Response was: {response_json}")
+            return {
+                "success": False,
+                "content": None,
+                "model": provider_name,
+                "error": f"Malformed response: {str(e)}"
+            }
+
+    except requests.Timeout:
+        logging.error(f"Timeout querying {provider_name}")
         return {
             "success": False,
             "content": None,
-            "model": model_name,
+            "model": provider_name,
+            "error": "Request timeout"
+        }
+    except Exception as e:
+        logging.error(f"Error querying {provider_name}: {e}")
+        return {
+            "success": False,
+            "content": None,
+            "model": provider_name,
             "error": str(e)
         }
 
@@ -307,23 +250,6 @@ def analyze_responses(responses):
         elif "UNCERTAIN" in content or uncertain:
             judgments[model] = "UNCERTAIN"
             uncertain_responses.append(model)
-        elif policy_limited:
-            # Look for implicit judgments in policy-limited responses
-            if any(phrase in text for phrase in [
-                "not supported by evidence", "debunked", "lack credible evidence",
-                "conspiracy theory", "no credible evidence", "rejected by experts"
-            ]):
-                judgments[model] = "FALSE"
-                policy_limited_responses.append(model)
-            elif any(phrase in text for phrase in [
-                "supported by evidence", "confirmed by", "verified by", "evidence shows",
-                "research indicates", "studies confirm"
-            ]):
-                judgments[model] = "TRUE"
-                policy_limited_responses.append(model)
-            else:
-                judgments[model] = "UNCERTAIN"
-                policy_limited_responses.append(model)
         else:
             judgments[model] = "UNCERTAIN"
             uncertain_responses.append(model)
@@ -428,10 +354,10 @@ def ask():
         # Preprocess the query before sending to LLMs
         structured_query = preprocess_query(raw_query)
 
-        # Get responses from models
+        # Get responses from all providers
         responses = {}
-        responses["gpt-4o"] = query_model("gpt-4o", structured_query)
-        responses["claude-3"] = query_model("claude-3", structured_query)
+        responses["openai"] = query_model("openai", structured_query)
+        responses["anthropic"] = query_model("anthropic", structured_query)
         responses["mistral"] = query_model("mistral", structured_query)
         responses["deepseek"] = query_model("deepseek", structured_query)
         
