@@ -1,6 +1,8 @@
 {
+  "last_updated": "2025-10-20T00:00:00Z",
+  "source": "last_known_good_fallback",
   "openai": "gpt-4o",
-  "anthropic": "claude-3-5-sonnet-20241022",
+  "anthropic": "claude-3-opus-20240229",
   "mistral": "mistral-large-latest",
   "deepseek": "deepseek-chat"
 }

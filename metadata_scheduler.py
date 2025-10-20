@@ -83,11 +83,17 @@ def discover_latest_models():
 
 
 def save_model_config(models):
-    """Save discovered models to persistent config file"""
+    """Save discovered models to persistent config file with timestamp"""
     try:
+        config_data = {
+            "last_updated": datetime.now().isoformat() + "Z",
+            "source": "scheduler_auto_discovery",
+        }
+        config_data.update(models)
+
         with open("model_config.json", "w") as f:
-            json.dump(models, f, indent=2)
-        logging.info(f"Model config saved: {models}")
+            json.dump(config_data, f, indent=2)
+        logging.info(f"Model config updated with discovered models: {models}")
     except Exception as e:
         logging.error(f"Error saving model config: {e}")
 
