@@ -15,7 +15,16 @@ def load_model_config():
 
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
-            return json.load(f)
+            config = json.load(f)
+            # Extract just the model IDs for backward compatibility
+            return {
+                "last_updated": config.get("last_updated"),
+                "source": config.get("source"),
+                "openai": config.get("openai", {}).get("id") if isinstance(config.get("openai"), dict) else config.get("openai"),
+                "anthropic": config.get("anthropic", {}).get("id") if isinstance(config.get("anthropic"), dict) else config.get("anthropic"),
+                "mistral": config.get("mistral", {}).get("id") if isinstance(config.get("mistral"), dict) else config.get("mistral"),
+                "deepseek": config.get("deepseek", {}).get("id") if isinstance(config.get("deepseek"), dict) else config.get("deepseek")
+            }
     else:
         # Last known good fallback (will be updated by scheduler on first run)
         return {
@@ -134,3 +143,35 @@ def get_value_at_path(obj, path):
         else:
             current = current[key]
     return current
+
+
+def load_full_model_config():
+    """Load full model config with IDs and doc URLs for metadata endpoint"""
+    import json
+    config_file = "model_config.json"
+
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            return json.load(f)
+    else:
+        # Last known good fallback with doc URLs
+        return {
+            "last_updated": "2025-10-20T00:00:00Z",
+            "source": "last_known_good_fallback",
+            "openai": {
+                "id": "gpt-4o",
+                "docs_url": "https://platform.openai.com/docs/models"
+            },
+            "anthropic": {
+                "id": "claude-3-opus-20240229",
+                "docs_url": "https://docs.anthropic.com/about-claude/models/overview"
+            },
+            "mistral": {
+                "id": "mistral-large-latest",
+                "docs_url": "https://docs.mistral.ai/getting-started/models/"
+            },
+            "deepseek": {
+                "id": "deepseek-chat",
+                "docs_url": "https://api-docs.deepseek.com/models"
+            }
+        }

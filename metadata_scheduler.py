@@ -83,17 +83,31 @@ def discover_latest_models():
 
 
 def save_model_config(models):
-    """Save discovered models to persistent config file with timestamp"""
+    """Save discovered models to persistent config file with timestamp and doc URLs"""
     try:
+        # Map discovered model IDs to their official documentation URLs
+        docs_urls = {
+            "openai": "https://platform.openai.com/docs/models",
+            "anthropic": "https://docs.anthropic.com/about-claude/models/overview",
+            "mistral": "https://docs.mistral.ai/getting-started/models/",
+            "deepseek": "https://api-docs.deepseek.com/models"
+        }
+
         config_data = {
             "last_updated": datetime.now().isoformat() + "Z",
             "source": "scheduler_auto_discovery",
         }
-        config_data.update(models)
+
+        # Add model ID and docs URL for each provider
+        for provider, model_id in models.items():
+            config_data[provider] = {
+                "id": model_id,
+                "docs_url": docs_urls.get(provider, "")
+            }
 
         with open("model_config.json", "w") as f:
             json.dump(config_data, f, indent=2)
-        logging.info(f"Model config updated with discovered models: {models}")
+        logging.info(f"Model config updated with discovered models and doc URLs: {models}")
     except Exception as e:
         logging.error(f"Error saving model config: {e}")
 

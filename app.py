@@ -9,7 +9,7 @@ from datetime import datetime
 
 from flask_sslify import SSLify
 from preprocess import preprocess_query
-from model_registry import get_provider_config, get_value_at_path
+from model_registry import get_provider_config, get_value_at_path, load_full_model_config
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, 
@@ -376,25 +376,36 @@ def ask():
 
 @app.route('/api/model-metadata', methods=['GET'])
 def get_model_metadata():
-    """Return model metadata for the frontend"""
+    """Return model metadata with doc URLs for the frontend"""
     try:
-        # Try to read from the scheduler's updated file
-        metadata_file = "/tmp/model_metadata.json"
-        if os.path.exists(metadata_file):
-            with open(metadata_file, 'r') as f:
-                return jsonify(json.load(f))
-        else:
-            # Return default metadata if scheduler hasn't run yet
-            default_metadata = {
-                "last_updated": "2025-01-08",
-                "models": {
-                    "gpt-4o": {"name": "GPT-4o", "provider": "OpenAI", "training_cutoff": "April 2023"},
-                    "claude-3": {"name": "Claude 3 Opus", "provider": "Anthropic", "training_cutoff": "August 2023"},
-                    "mistral": {"name": "Mistral Large", "provider": "Mistral AI", "training_cutoff": "December 2023"},
-                    "deepseek": {"name": "DeepSeek Chat", "provider": "DeepSeek AI", "training_cutoff": "January 2023"}
-                }
-            }
-            return jsonify(default_metadata)
+        # Load model config (either from scheduler or fallback)
+        config = load_full_model_config()
+
+        # Format for frontend with provider names
+        provider_names = {
+            "openai": "OpenAI",
+            "anthropic": "Anthropic",
+            "mistral": "Mistral AI",
+            "deepseek": "DeepSeek"
+        }
+
+        formatted_metadata = {
+            "last_updated": config.get("last_updated"),
+            "source": config.get("source"),
+            "models": {}
+        }
+
+        for provider, provider_name in provider_names.items():
+            if provider in config:
+                model_info = config[provider]
+                if isinstance(model_info, dict):
+                    formatted_metadata["models"][provider] = {
+                        "id": model_info.get("id"),
+                        "provider": provider_name,
+                        "docs_url": model_info.get("docs_url")
+                    }
+
+        return jsonify(formatted_metadata)
     except Exception as e:
         logging.error(f"Error fetching model metadata: {e}")
         return jsonify({"error": str(e)}), 500
