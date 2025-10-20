@@ -9,9 +9,9 @@ import os
 
 # Load the latest discovered models (updated by scheduler)
 def load_model_config():
-    """Load model IDs discovered by the scheduler"""
+    """Load model IDs discovered by the scheduler from /tmp"""
     import json
-    config_file = "model_config.json"
+    config_file = "/tmp/model_config.json"
 
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
@@ -80,7 +80,7 @@ def get_provider_config(provider_name):
             "headers_fn": lambda: {
                 "x-api-key": CLAUDE_API_KEY,
                 "Content-Type": "application/json",
-                "anthropic-version": "2024-10-01"  # Updated to support latest models
+                "anthropic-version": "2024-06-01"  # Latest stable version
             },
             "payload_fn": lambda model_id, prompt: {
                 "model": model_id,
@@ -90,7 +90,7 @@ def get_provider_config(provider_name):
             "response_path": ["content", 0, "text"],
             "model_id": model_config.get("anthropic", "claude-3-5-sonnet-20241022"),
             "models_endpoint": "https://api.anthropic.com/v1/models",
-            "models_auth": lambda: {"x-api-key": CLAUDE_API_KEY, "anthropic-version": "2024-10-01"}
+            "models_auth": lambda: {"x-api-key": CLAUDE_API_KEY, "anthropic-version": "2024-06-01"}
         },
         "mistral": {
             "endpoint": "https://api.mistral.ai/v1/chat/completions",
@@ -146,9 +146,9 @@ def get_value_at_path(obj, path):
 
 
 def load_full_model_config():
-    """Load full model config with IDs and doc URLs for metadata endpoint"""
+    """Load full model config with IDs and doc URLs for metadata endpoint from /tmp"""
     import json
-    config_file = "model_config.json"
+    config_file = "/tmp/model_config.json"
 
     if os.path.exists(config_file):
         with open(config_file, 'r') as f:
