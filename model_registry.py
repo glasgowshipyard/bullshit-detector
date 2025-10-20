@@ -17,10 +17,12 @@ def load_model_config():
         with open(config_file, 'r') as f:
             return json.load(f)
     else:
-        # Fallback defaults if scheduler hasn't run yet
+        # Last known good fallback (will be updated by scheduler on first run)
         return {
+            "last_updated": "2025-10-20T00:00:00Z",
+            "source": "last_known_good_fallback",
             "openai": "gpt-4o",
-            "anthropic": "claude-3-5-sonnet-20241022",
+            "anthropic": "claude-3-opus-20240229",
             "mistral": "mistral-large-latest",
             "deepseek": "deepseek-chat"
         }
