@@ -83,7 +83,7 @@ def discover_latest_models():
 
 
 def save_model_config(models):
-    """Save discovered models to persistent config file with timestamp and doc URLs"""
+    """Save discovered models to /tmp for sharing between dynos"""
     try:
         # Map discovered model IDs to their official documentation URLs
         docs_urls = {
@@ -105,7 +105,7 @@ def save_model_config(models):
                 "docs_url": docs_urls.get(provider, "")
             }
 
-        with open("model_config.json", "w") as f:
+        with open("/tmp/model_config.json", "w") as f:
             json.dump(config_data, f, indent=2)
         logging.info(f"Model config updated with discovered models and doc URLs: {models}")
     except Exception as e:
