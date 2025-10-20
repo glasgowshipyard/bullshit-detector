@@ -164,14 +164,17 @@ def run_scheduler():
     while True:
         try:
             logging.info("Fetching model metadata...")
-            metadata = get_model_metadata()
-            logging.info(f"Successfully collected metadata for {len(metadata['models'])} models")
-            
+            discovered_models = get_model_metadata()
+            if discovered_models:
+                logging.info(f"Successfully discovered {len(discovered_models)} models: {discovered_models}")
+            else:
+                logging.warning("No new models discovered, using existing config")
+
             # Get credit status
             logging.info("Checking API credit status...")
             credit_status = get_credit_status()
             logging.info(f"Credit status: {credit_status['status']} ({credit_status['percentage']}%)")
-            
+
             # Sleep for 24 hours
             logging.info("Next update in 24 hours")
             time.sleep(24 * 60 * 60)  # 24 hours in seconds
