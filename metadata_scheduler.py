@@ -4,9 +4,10 @@ import logging
 import os
 from datetime import datetime
 import time
+from model_registry import get_provider_config
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, 
+logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load API keys from environment variables
@@ -15,132 +16,96 @@ CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
+def discover_latest_models():
+    """
+    Query each provider's models endpoint to discover the latest available model.
+    Returns a dict mapping provider names to model IDs.
+    """
+    models = {}
+    providers = ["openai", "anthropic", "mistral", "deepseek"]
+
+    for provider in providers:
+        try:
+            config = get_provider_config(provider)
+            endpoint = config["models_endpoint"]
+            headers = config["models_auth"]()
+
+            logging.info(f"Querying {provider} models endpoint: {endpoint}")
+            response = requests.get(endpoint, headers=headers, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                # Extract latest model based on provider response format
+                if provider == "openai":
+                    # OpenAI returns list of models, most recent first
+                    if "data" in data and len(data["data"]) > 0:
+                        model_id = data["data"][0]["id"]
+                        models[provider] = model_id
+                        logging.info(f"OpenAI latest model: {model_id}")
+                    else:
+                        logging.warning(f"No models returned from OpenAI")
+
+                elif provider == "anthropic":
+                    # Anthropic returns models in 'data' array, most recent first
+                    if "data" in data and len(data["data"]) > 0:
+                        model_id = data["data"][0]["id"]
+                        models[provider] = model_id
+                        logging.info(f"Anthropic latest model: {model_id}")
+                    else:
+                        logging.warning(f"No models returned from Anthropic")
+
+                elif provider == "mistral":
+                    # Mistral returns models in 'data' array
+                    if "data" in data and len(data["data"]) > 0:
+                        model_id = data["data"][0]["id"]
+                        models[provider] = model_id
+                        logging.info(f"Mistral latest model: {model_id}")
+                    else:
+                        logging.warning(f"No models returned from Mistral")
+
+                elif provider == "deepseek":
+                    # DeepSeek returns models in 'data' array
+                    if "data" in data and len(data["data"]) > 0:
+                        model_id = data["data"][0]["id"]
+                        models[provider] = model_id
+                        logging.info(f"DeepSeek latest model: {model_id}")
+                    else:
+                        logging.warning(f"No models returned from DeepSeek")
+
+            else:
+                logging.error(f"Error querying {provider}: HTTP {response.status_code}")
+
+        except Exception as e:
+            logging.error(f"Error discovering models for {provider}: {e}")
+
+    return models
+
+
+def save_model_config(models):
+    """Save discovered models to persistent config file"""
+    try:
+        with open("model_config.json", "w") as f:
+            json.dump(models, f, indent=2)
+        logging.info(f"Model config saved: {models}")
+    except Exception as e:
+        logging.error(f"Error saving model config: {e}")
+
+
 def get_model_metadata():
-    """Collect metadata about AI models including training cutoff dates and token usage"""
-    metadata = {
-        "last_updated": datetime.now().strftime("%Y-%m-%d"),
-        "models": {}
-    }
-    
-    # OpenAI (GPT-4o)
-    try:
-        # Get model info
-        headers = {"Authorization": f"Bearer {OPENAI_API_KEY}"}
-        response = requests.get("https://api.openai.com/v1/models/gpt-4o", headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            # In reality, you'd extract this from the response if available
-            metadata["models"]["gpt-4o"] = {
-                "name": "GPT-4o",
-                "provider": "OpenAI",
-                "training_cutoff": "April 2023",
-                "status": "active"
-            }
-            
-        # Get token usage - typically from the billing API
-        # This is a simplified example - actual implementation depends on OpenAI's billing API
-        usage_response = requests.get("https://api.openai.com/v1/usage", headers=headers)
-        if usage_response.status_code == 200:
-            usage_data = usage_response.json()
-            # Extract token usage
-            metadata["models"]["gpt-4o"]["token_usage"] = {
-                "tokens_used": "Usage data not available from API",
-                "tokens_remaining": "N/A"
-            }
-    except Exception as e:
-        logging.error(f"Error getting OpenAI metadata: {e}")
-        metadata["models"]["gpt-4o"] = {
-            "name": "GPT-4o", 
-            "provider": "OpenAI",
-            "training_cutoff": "April 2023", 
-            "status": "error",
-            "error": str(e)
-        }
-    
-    # Anthropic (Claude)
-    try:
-        headers = {
-            "x-api-key": CLAUDE_API_KEY,
-            "anthropic-version": "2023-06-01"
-        }
-        # Anthropic doesn't have a public model info API, so we're using hardcoded info
-        metadata["models"]["claude-3"] = {
-            "name": "Claude 3 Opus",
-            "provider": "Anthropic",
-            "training_cutoff": "August 2023",
-            "status": "active",
-            "token_usage": {
-                "tokens_used": "Usage data not available from API",
-                "tokens_remaining": "N/A"
-            }
-        }
-    except Exception as e:
-        logging.error(f"Error getting Claude metadata: {e}")
-        metadata["models"]["claude-3"] = {
-            "name": "Claude 3 Opus", 
-            "provider": "Anthropic",
-            "training_cutoff": "August 2023", 
-            "status": "error",
-            "error": str(e)
-        }
-    
-    # Mistral AI
-    try:
-        headers = {"Authorization": f"Bearer {MISTRAL_API_KEY}"}
-        # Mistral doesn't have a public model info API, so we're using hardcoded info
-        metadata["models"]["mistral"] = {
-            "name": "Mistral Large",
-            "provider": "Mistral AI",
-            "training_cutoff": "December 2023",
-            "status": "active",
-            "token_usage": {
-                "tokens_used": "Usage data not available from API",
-                "tokens_remaining": "N/A"
-            }
-        }
-    except Exception as e:
-        logging.error(f"Error getting Mistral metadata: {e}")
-        metadata["models"]["mistral"] = {
-            "name": "Mistral Large", 
-            "provider": "Mistral AI",
-            "training_cutoff": "December 2023", 
-            "status": "error",
-            "error": str(e)
-        }
-    
-    # DeepSeek
-    try:
-        headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
-        # DeepSeek doesn't have a public model info API, so we're using hardcoded info
-        metadata["models"]["deepseek"] = {
-            "name": "DeepSeek Chat",
-            "provider": "DeepSeek AI",
-            "training_cutoff": "January 2023",
-            "status": "active",
-            "token_usage": {
-                "tokens_used": "Usage data not available from API",
-                "tokens_remaining": "N/A"
-            }
-        }
-    except Exception as e:
-        logging.error(f"Error getting DeepSeek metadata: {e}")
-        metadata["models"]["deepseek"] = {
-            "name": "DeepSeek Chat", 
-            "provider": "DeepSeek AI",
-            "training_cutoff": "January 2023", 
-            "status": "error",
-            "error": str(e)
-        }
-    
-    # Save to a JSON file
-    try:
-        with open('/tmp/model_metadata.json', 'w') as f:
-            json.dump(metadata, f, indent=2)
-        logging.info(f"Metadata saved to tmp/model_metadata.json")
-    except Exception as e:
-        logging.error(f"Error saving metadata: {e}")
-    
-    return metadata
+    """Discover and update available models from each provider"""
+    logging.info("Starting model discovery...")
+
+    # Discover latest models from each provider
+    discovered_models = discover_latest_models()
+
+    if discovered_models:
+        logging.info(f"Discovered models: {discovered_models}")
+        save_model_config(discovered_models)
+        return discovered_models
+    else:
+        logging.warning("No models discovered, keeping existing config")
+        return {}
 
 # New function to get credit status from DeepSeek API
 def get_credit_status():
