@@ -19,6 +19,7 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 def discover_latest_models():
     """
     Query each provider's models endpoint to discover the latest available model.
+    Sorts by creation timestamp to find the actual latest.
     Returns a dict mapping provider names to model IDs.
     """
     models = {}
@@ -36,42 +37,31 @@ def discover_latest_models():
             if response.status_code == 200:
                 data = response.json()
 
-                # Extract latest model based on provider response format
-                if provider == "openai":
-                    # OpenAI returns list of models, most recent first
-                    if "data" in data and len(data["data"]) > 0:
-                        model_id = data["data"][0]["id"]
-                        models[provider] = model_id
-                        logging.info(f"OpenAI latest model: {model_id}")
-                    else:
-                        logging.warning(f"No models returned from OpenAI")
+                # Extract latest model by sorting by creation timestamp
+                if "data" in data and len(data["data"]) > 0:
+                    model_list = data["data"]
 
-                elif provider == "anthropic":
-                    # Anthropic returns models in 'data' array, most recent first
-                    if "data" in data and len(data["data"]) > 0:
-                        model_id = data["data"][0]["id"]
-                        models[provider] = model_id
-                        logging.info(f"Anthropic latest model: {model_id}")
-                    else:
-                        logging.warning(f"No models returned from Anthropic")
+                    # Sort by creation timestamp to find latest
+                    def get_timestamp(model):
+                        if "created_at" in model:
+                            # ISO format string (Anthropic)
+                            try:
+                                from datetime import datetime
+                                dt = datetime.fromisoformat(model["created_at"].replace("Z", "+00:00"))
+                                return dt.timestamp()
+                            except:
+                                return 0
+                        elif "created" in model:
+                            # Unix timestamp (OpenAI, Mistral)
+                            return model["created"]
+                        return 0
 
-                elif provider == "mistral":
-                    # Mistral returns models in 'data' array
-                    if "data" in data and len(data["data"]) > 0:
-                        model_id = data["data"][0]["id"]
-                        models[provider] = model_id
-                        logging.info(f"Mistral latest model: {model_id}")
-                    else:
-                        logging.warning(f"No models returned from Mistral")
-
-                elif provider == "deepseek":
-                    # DeepSeek returns models in 'data' array
-                    if "data" in data and len(data["data"]) > 0:
-                        model_id = data["data"][0]["id"]
-                        models[provider] = model_id
-                        logging.info(f"DeepSeek latest model: {model_id}")
-                    else:
-                        logging.warning(f"No models returned from DeepSeek")
+                    sorted_models = sorted(model_list, key=get_timestamp, reverse=True)
+                    model_id = sorted_models[0]["id"]
+                    models[provider] = model_id
+                    logging.info(f"{provider.capitalize()} latest model: {model_id}")
+                else:
+                    logging.warning(f"No models returned from {provider}")
 
             else:
                 logging.error(f"Error querying {provider}: HTTP {response.status_code}")
