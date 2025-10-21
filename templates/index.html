@@ -949,19 +949,31 @@
                 // Update model info in footer
                 function updateModelInfo(data) {
                     if (data && data.models) {
-                        // Update model name labels with actual discovered models
-                        if (data.models.openai && data.models.openai.id) {
-                            gptModelName.textContent = data.models.openai.id;
-                        }
-                        if (data.models.anthropic && data.models.anthropic.id) {
-                            claudeModelName.textContent = data.models.anthropic.id;
-                        }
-                        if (data.models.mistral && data.models.mistral.id) {
-                            mistralModelName.textContent = data.models.mistral.id;
-                        }
-                        if (data.models.deepseek && data.models.deepseek.id) {
-                            deepseekModelName.textContent = data.models.deepseek.id;
-                        }
+                        // Nice names for each model
+                        const niceNames = {
+                            'openai': 'GPT-5',
+                            'anthropic': 'Claude Haiku',
+                            'mistral': 'Mistral Medium',
+                            'deepseek': 'DeepSeek'
+                        };
+
+                        // Update model name labels with nice names and tooltips
+                        const updateModelDisplay = (modelKey, nameElement) => {
+                            if (data.models[modelKey] && data.models[modelKey].id) {
+                                const niceName = niceNames[modelKey];
+                                const displayName = data.models[modelKey].display_name;
+                                const modelId = data.models[modelKey].id;
+                                const tooltip = displayName || modelId;
+
+                                // Create the display: "Nice Name ?"
+                                nameElement.innerHTML = `${niceName} <span class="text-xs text-gray-400 cursor-help" title="${tooltip}">?</span>`;
+                            }
+                        };
+
+                        updateModelDisplay('openai', gptModelName);
+                        updateModelDisplay('anthropic', claudeModelName);
+                        updateModelDisplay('mistral', mistralModelName);
+                        updateModelDisplay('deepseek', deepseekModelName);
 
                         const modelInfos = [];
 
