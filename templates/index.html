@@ -1015,15 +1015,15 @@
                         claimText.textContent = capitalizeFirstLetter(data.query);
                         
                         // Only show models with successful responses
-                        if (data.responses['gpt-4o'] && data.responses['gpt-4o'].success) {
+                        if (data.responses['openai'] && data.responses['openai'].success) {
                             gptContainer.classList.remove('hidden');
-                            gptResponse.textContent = data.responses['gpt-4o'].content;
+                            gptResponse.textContent = data.responses['openai'].content;
                             gptResponse.classList.remove('text-red-400');
                         }
-                        
-                        if (data.responses['claude-3'] && data.responses['claude-3'].success) {
+
+                        if (data.responses['anthropic'] && data.responses['anthropic'].success) {
                             claudeContainer.classList.remove('hidden');
-                            claudeResponse.textContent = data.responses['claude-3'].content;
+                            claudeResponse.textContent = data.responses['anthropic'].content;
                             claudeResponse.classList.remove('text-red-400');
                         }
                         
