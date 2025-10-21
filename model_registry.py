@@ -159,18 +159,22 @@ def load_full_model_config():
             "source": "last_known_good_fallback",
             "openai": {
                 "id": "gpt-4o",
+                "display_name": None,
                 "docs_url": "https://platform.openai.com/docs/models"
             },
             "anthropic": {
                 "id": "claude-3-opus-20240229",
+                "display_name": "Claude 3 Opus",
                 "docs_url": "https://docs.anthropic.com/about-claude/models/overview"
             },
             "mistral": {
                 "id": "mistral-large-latest",
+                "display_name": None,
                 "docs_url": "https://docs.mistral.ai/getting-started/models/"
             },
             "deepseek": {
                 "id": "deepseek-chat",
+                "display_name": None,
                 "docs_url": "https://api-docs.deepseek.com/models"
             }
         }

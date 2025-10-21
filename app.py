@@ -51,7 +51,6 @@ def discover_latest_models():
                 # Extract latest model by sorting by creation timestamp
                 if "data" in data and len(data["data"]) > 0:
                     model_list = data["data"]
-                    logging.debug(f"{provider} full response sample: {model_list[0] if model_list else 'no data'}")
 
                     # Sort by creation timestamp to find latest
                     def get_timestamp(model):
@@ -68,9 +67,18 @@ def discover_latest_models():
                         return 0
 
                     sorted_models = sorted(model_list, key=get_timestamp, reverse=True)
-                    model_id = sorted_models[0]["id"]
-                    models[provider] = model_id
-                    logging.info(f"{provider.capitalize()} latest model: {model_id}")
+                    latest = sorted_models[0]
+                    model_id = latest["id"]
+
+                    # Extract display name if available
+                    display_name = None
+                    if "display_name" in latest:
+                        display_name = latest["display_name"]
+                    elif "description" in latest:
+                        display_name = latest["description"]
+
+                    models[provider] = {"id": model_id, "display_name": display_name}
+                    logging.info(f"{provider.capitalize()} latest model: {model_id} (display: {display_name})")
                 else:
                     logging.warning(f"No models returned from {provider}")
 
@@ -98,9 +106,18 @@ def save_model_config(models):
             "source": "scheduler_auto_discovery",
         }
 
-        for provider, model_id in models.items():
+        for provider, model_info in models.items():
+            # Handle both old format (string) and new format (dict with id and display_name)
+            if isinstance(model_info, dict):
+                model_id = model_info.get("id", "")
+                display_name = model_info.get("display_name")
+            else:
+                model_id = model_info
+                display_name = None
+
             config_data[provider] = {
                 "id": model_id,
+                "display_name": display_name,
                 "docs_url": docs_urls.get(provider, "")
             }
 
