@@ -670,7 +670,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium">GPT-4o</h3>
+                                        <h3 class="font-medium" id="gpt-model-name">GPT-4o</h3>
                                         <div class="text-xs text-gray-400">OpenAI</div>
                                     </div>
                                 </div>
@@ -689,7 +689,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium">Claude 3</h3>
+                                        <h3 class="font-medium" id="claude-model-name">Claude 3</h3>
                                         <div class="text-xs text-gray-400">Anthropic</div>
                                     </div>
                                 </div>
@@ -708,7 +708,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇫🇷</span>
                                     <div>
-                                        <h3 class="font-medium">Mistral</h3>
+                                        <h3 class="font-medium" id="mistral-model-name">Mistral</h3>
                                         <div class="text-xs text-gray-400">Mistral AI</div>
                                     </div>
                                 </div>
@@ -727,7 +727,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇨🇳</span>
                                     <div>
-                                        <h3 class="font-medium">DeepSeek</h3>
+                                        <h3 class="font-medium" id="deepseek-model-name">DeepSeek</h3>
                                         <div class="text-xs text-gray-400">DeepSeek AI</div>
                                     </div>
                                 </div>
@@ -801,7 +801,13 @@
                 const claudeResponse = document.getElementById('claude-response');
                 const mistralResponse = document.getElementById('mistral-response');
                 const deepseekResponse = document.getElementById('deepseek-response');
-                
+
+                // Get model name elements
+                const gptModelName = document.getElementById('gpt-model-name');
+                const claudeModelName = document.getElementById('claude-model-name');
+                const mistralModelName = document.getElementById('mistral-model-name');
+                const deepseekModelName = document.getElementById('deepseek-model-name');
+
                 // Get model containers
                 const gptContainer = document.querySelector('.model-openai');
                 const claudeContainer = document.querySelector('.model-claude');
@@ -943,6 +949,20 @@
                 // Update model info in footer
                 function updateModelInfo(data) {
                     if (data && data.models) {
+                        // Update model name labels with actual discovered models
+                        if (data.models.openai && data.models.openai.id) {
+                            gptModelName.textContent = data.models.openai.id;
+                        }
+                        if (data.models.anthropic && data.models.anthropic.id) {
+                            claudeModelName.textContent = data.models.anthropic.id;
+                        }
+                        if (data.models.mistral && data.models.mistral.id) {
+                            mistralModelName.textContent = data.models.mistral.id;
+                        }
+                        if (data.models.deepseek && data.models.deepseek.id) {
+                            deepseekModelName.textContent = data.models.deepseek.id;
+                        }
+
                         const modelInfos = [];
 
                         for (const [modelId, modelData] of Object.entries(data.models)) {
