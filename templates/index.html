@@ -943,17 +943,37 @@
                 // Update model info in footer
                 function updateModelInfo(data) {
                     if (data && data.models) {
-                        let infoText = "Model latest training data: ";
                         const modelInfos = [];
-                        
+
                         for (const [modelId, modelData] of Object.entries(data.models)) {
-                            if (modelData && modelData.name && modelData.training_cutoff) {
-                                modelInfos.push(`${modelData.name} (${modelData.training_cutoff})`);
+                            if (modelData && modelData.docs_url && modelData.provider) {
+                                // Create clickable link to docs
+                                const link = document.createElement('a');
+                                link.href = modelData.docs_url;
+                                link.target = '_blank';
+                                link.rel = 'noopener noreferrer';
+                                link.textContent = modelData.provider;
+                                link.style.color = 'inherit';
+                                link.style.textDecoration = 'underline';
+                                link.style.cursor = 'pointer';
+                                modelInfos.push(link);
                             }
                         }
-                        
+
                         if (modelInfos.length > 0) {
-                            modelInfo.textContent = infoText + modelInfos.join(' • ');
+                            modelInfo.innerHTML = "";
+                            const prefix = document.createElement('span');
+                            prefix.textContent = "Model docs: ";
+                            modelInfo.appendChild(prefix);
+
+                            modelInfos.forEach((link, index) => {
+                                if (index > 0) {
+                                    const separator = document.createElement('span');
+                                    separator.textContent = ' • ';
+                                    modelInfo.appendChild(separator);
+                                }
+                                modelInfo.appendChild(link);
+                            });
                         } else {
                             modelInfo.textContent = "Model training data information unavailable";
                         }
