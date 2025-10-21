@@ -4,3 +4,4 @@ nltk
 gunicorn
 flask-sslify
 stripe
+apscheduler
