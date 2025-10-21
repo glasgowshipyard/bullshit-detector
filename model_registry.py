@@ -67,7 +67,6 @@ def get_provider_config(provider_name):
             "payload_fn": lambda model_id, prompt: {
                 "model": model_id,
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.1,
                 "max_tokens": 1000
             },
             "response_path": ["choices", 0, "message", "content"],
