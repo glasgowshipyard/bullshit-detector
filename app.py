@@ -51,6 +51,7 @@ def discover_latest_models():
                 # Extract latest model by sorting by creation timestamp
                 if "data" in data and len(data["data"]) > 0:
                     model_list = data["data"]
+                    logging.debug(f"{provider} full response sample: {model_list[0] if model_list else 'no data'}")
 
                     # Sort by creation timestamp to find latest
                     def get_timestamp(model):
