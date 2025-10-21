@@ -10,6 +10,7 @@ from datetime import datetime
 from flask_sslify import SSLify
 from preprocess import preprocess_query
 from model_registry import get_provider_config, get_value_at_path, load_full_model_config
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, 
@@ -24,6 +25,109 @@ sslify = SSLify(app, permanent=True)
 # Load Stripe API key (others are loaded by model_registry)
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 stripe.api_key = STRIPE_SECRET_KEY
+
+# Model discovery functions (moved from metadata_scheduler.py)
+def discover_latest_models():
+    """
+    Query each provider's models endpoint to discover the latest available model.
+    Sorts by creation timestamp to find the actual latest.
+    Returns a dict mapping provider names to model IDs.
+    """
+    models = {}
+    providers = ["openai", "anthropic", "mistral", "deepseek"]
+
+    for provider in providers:
+        try:
+            config = get_provider_config(provider)
+            endpoint = config["models_endpoint"]
+            headers = config["models_auth"]()
+
+            logging.info(f"Querying {provider} models endpoint: {endpoint}")
+            response = requests.get(endpoint, headers=headers, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                # Extract latest model by sorting by creation timestamp
+                if "data" in data and len(data["data"]) > 0:
+                    model_list = data["data"]
+
+                    # Sort by creation timestamp to find latest
+                    def get_timestamp(model):
+                        if "created_at" in model:
+                            # ISO format string (Anthropic)
+                            try:
+                                dt = datetime.fromisoformat(model["created_at"].replace("Z", "+00:00"))
+                                return dt.timestamp()
+                            except:
+                                return 0
+                        elif "created" in model:
+                            # Unix timestamp (OpenAI, Mistral)
+                            return model["created"]
+                        return 0
+
+                    sorted_models = sorted(model_list, key=get_timestamp, reverse=True)
+                    model_id = sorted_models[0]["id"]
+                    models[provider] = model_id
+                    logging.info(f"{provider.capitalize()} latest model: {model_id}")
+                else:
+                    logging.warning(f"No models returned from {provider}")
+
+            else:
+                logging.error(f"Error querying {provider}: HTTP {response.status_code}")
+
+        except Exception as e:
+            logging.error(f"Error discovering models for {provider}: {e}")
+
+    return models
+
+
+def save_model_config(models):
+    """Save discovered models to /tmp with doc URLs"""
+    try:
+        docs_urls = {
+            "openai": "https://platform.openai.com/docs/models",
+            "anthropic": "https://docs.anthropic.com/about-claude/models/overview",
+            "mistral": "https://docs.mistral.ai/getting-started/models/",
+            "deepseek": "https://api-docs.deepseek.com/models"
+        }
+
+        config_data = {
+            "last_updated": datetime.now().isoformat() + "Z",
+            "source": "scheduler_auto_discovery",
+        }
+
+        for provider, model_id in models.items():
+            config_data[provider] = {
+                "id": model_id,
+                "docs_url": docs_urls.get(provider, "")
+            }
+
+        with open("/tmp/model_config.json", "w") as f:
+            json.dump(config_data, f, indent=2)
+        logging.info(f"Model config updated with discovered models and doc URLs: {models}")
+    except Exception as e:
+        logging.error(f"Error saving model config: {e}")
+
+
+def run_model_discovery():
+    """Run model discovery job"""
+    logging.info("Starting scheduled model discovery...")
+    discovered_models = discover_latest_models()
+    if discovered_models:
+        logging.info(f"Discovered models: {discovered_models}")
+        save_model_config(discovered_models)
+    else:
+        logging.warning("No models discovered")
+
+
+# Initialize background scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(run_model_discovery, 'interval', hours=24)
+scheduler.start()
+
+# Run discovery immediately on startup
+run_model_discovery()
 
 # Function to strip markdown formatting
 def strip_markdown(text):
