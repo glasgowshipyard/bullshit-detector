@@ -80,7 +80,7 @@ def get_provider_config(provider_name):
             "headers_fn": lambda: {
                 "x-api-key": CLAUDE_API_KEY,
                 "Content-Type": "application/json",
-                "anthropic-version": "2024-06-01"  # Latest stable version
+                "anthropic-version": "2023-06-01"
             },
             "payload_fn": lambda model_id, prompt: {
                 "model": model_id,
@@ -90,7 +90,7 @@ def get_provider_config(provider_name):
             "response_path": ["content", 0, "text"],
             "model_id": model_config.get("anthropic", "claude-3-5-sonnet-20241022"),
             "models_endpoint": "https://api.anthropic.com/v1/models",
-            "models_auth": lambda: {"x-api-key": CLAUDE_API_KEY, "anthropic-version": "2024-06-01"}
+            "models_auth": lambda: {"x-api-key": CLAUDE_API_KEY, "anthropic-version": "2023-06-01"}
         },
         "mistral": {
             "endpoint": "https://api.mistral.ai/v1/chat/completions",
