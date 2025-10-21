@@ -247,6 +247,8 @@ def query_model(provider_name, prompt):
                 "error": f"Non-JSON response: {str(e)}"
             }
 
+        logging.debug(f"{provider_name} response JSON: {response_json}")
+
         # Extract content using the provider's response path
         try:
             content = get_value_at_path(response_json, response_path)
@@ -260,7 +262,8 @@ def query_model(provider_name, prompt):
             }
         except (KeyError, IndexError, TypeError) as e:
             logging.error(f"Could not extract content from {provider_name} response: {e}")
-            logging.debug(f"Response was: {response_json}")
+            logging.error(f"Full response JSON: {response_json}")
+            logging.error(f"Expected response_path: {response_path}")
             return {
                 "success": False,
                 "content": None,
