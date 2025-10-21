@@ -367,6 +367,10 @@ def analyze_responses(responses):
     for judgment in substantive_judgments.values():
         judgment_counts[judgment] += 1
 
+    logging.info(f"Judgments dict: {judgments}")
+    logging.info(f"Substantive judgments: {substantive_judgments}")
+    logging.info(f"Judgment counts: {judgment_counts}")
+
     # Determine the majority verdict
     total_models = len(substantive_judgments)
     if judgment_counts["UNCERTAIN"] >= (total_models / 3) or judgment_counts["UNCERTAIN"] >= 2:
@@ -431,7 +435,9 @@ def analyze_responses(responses):
         confidence_level = "LOW"
     else:
         confidence_level = "VERY LOW"
-    
+
+    logging.info(f"FINAL CONFIDENCE: verdict={majority_verdict}, confidence={round(confidence)}%, level={confidence_level}, agreement_count={agreement_count}, total_models={total_models}, uncertain_count={judgment_counts['UNCERTAIN']}")
+
     return {
         "verdict": majority_verdict,
         "confidence_percentage": round(confidence),
