@@ -1,0 +1,1323 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bullshit Detector</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <style>
+            @import url('https://fonts.bunny.net/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+            
+            :root {
+                --bg-primary: #0f172a;
+                --bg-secondary: #1e293b;
+                --text-primary: #e2e8f0;
+                --text-secondary: #94a3b8;
+                --accent-primary: #3b82f6;
+                --accent-secondary: #2563eb;
+                --card-bg: rgba(30, 41, 59, 0.8);
+                --card-border: rgba(255, 255, 255, 0.1);
+                --model-bg: rgba(15, 23, 42, 0.7);
+            }
+            
+            /* Light mode variables - improved for better contrast */
+            .light-mode {
+                --bg-primary: #f1f5f9;
+                --bg-secondary: #e2e8f0;
+                --text-primary: #0f172a;
+                --text-secondary: #334155;
+                --accent-primary: #3b82f6;
+                --accent-secondary: #2563eb;
+                --card-bg: rgba(255, 255, 255, 0.95);
+                --card-border: rgba(0, 0, 0, 0.1);
+                --model-bg: rgba(241, 245, 249, 0.9);
+            }
+            
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: var(--bg-primary);
+                color: var(--text-primary);
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }
+            
+            .container {
+                max-width: 1280px;
+                margin-left: auto;
+                margin-right: auto;
+                padding-left: 1rem;
+                padding-right: 1rem;
+                width: 100%;
+            }
+            
+            .gradient-text {
+                background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
+            
+            .card {
+                background: var(--card-bg);
+                backdrop-filter: blur(10px);
+                border: 1px solid var(--card-border);
+                transition: all 0.3s ease;
+                width: 100%;
+                max-width: 48rem; /* Match Tailwind's max-w-4xl */
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .card:hover {
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+                transform: translateY(-2px);
+            }
+            
+            .input-field {
+                background: var(--model-bg);
+                border: 1px solid var(--card-border);
+                color: var(--text-primary);
+                transition: all 0.3s ease;
+                font-size: 16px;
+                min-height: 3rem;
+                max-height: 200px; /* max input field height */
+                line-height: 1.5;
+                resize: none;
+                padding-right: 80px;
+                }
+            
+            .input-field:focus {
+                border-color: var(--accent-primary);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            }
+            /* Begin submit button */
+            .submit-btn {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Simple opacity change on press, no transforms */
+            .submit-btn:active {
+            opacity: 0.8;
+            }
+            /* End submit button */
+
+            .confidence-bar {
+                height: 8px;
+                background: var(--bg-secondary);
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            .confidence-level {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.5s ease-out;
+            }
+            
+            .truth-high {
+                background: linear-gradient(90deg, #22c55e, #16a34a);
+            }
+            
+            .truth-medium {
+                background: linear-gradient(90deg, #eab308, #ca8a04);
+            }
+            
+            .truth-low {
+                background: linear-gradient(90deg, #ef4444, #dc2626);
+            }
+            
+            .model-response {
+                border-left: 4px solid transparent;
+                transition: all 0.3s ease;
+                background-color: var(--model-bg);
+            }
+            
+            .model-openai {
+                border-left-color: #10b981;
+            }
+            
+            .model-claude {
+                border-left-color: #8b5cf6;
+            }
+            
+            .model-mistral {
+                border-left-color: #3b82f6;
+            }
+            
+            .model-deepseek {
+                border-left-color: #f59e0b;
+            }
+            
+            .loader {
+                border: 3px solid rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                border-top: 3px solid var(--accent-primary);
+                width: 24px;
+                height: 24px;
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            .flag-emoji {
+                font-size: 1.2em;
+                margin-right: 8px;
+            }
+            
+            .theme-toggle {
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 50%;
+                transition: background-color 0.3s ease;
+                position: absolute;
+                right: 1rem;
+                top: 1rem;
+            }
+            
+            .theme-toggle:hover {
+                background-color: var(--bg-secondary);
+            }
+            
+            /* Text color fixes for light mode */
+            .light-mode .text-gray-300 {
+                color: #1e293b;
+            }
+            
+            .light-mode .text-gray-400 {
+                color: #334155;
+            }
+            
+            /* Fix card styling in light mode */
+            .light-mode .card {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            
+            .light-mode .model-response {
+                background-color: rgba(255, 255, 255, 0.7);
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            }
+            
+            /* Light mode loader */
+            .light-mode .loader {
+                border: 3px solid rgba(0, 0, 0, 0.1);
+                border-top: 3px solid var(--accent-primary);
+            }
+            
+            /* Better centering for the title */
+            header {
+                display: flex;
+                justify-content: center;
+                position: relative;
+                padding-top: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            /* Fix footer centering */
+            footer {
+                text-align: center;
+                width: 100%;
+                max-width: 48rem;
+                margin-left: auto;
+                margin-right: auto;
+                padding: 0 1rem;
+            }
+
+            /* Fix for washed out GPT icon in light mode */
+            .light-mode .from-green-400.to-teal-500 {
+                background: linear-gradient(to right, #059669, #0d9488);
+            }
+
+            /* Fix for washed out DeepSeek icon in light mode */
+            .light-mode .from-yellow-400.to-orange-500 {
+                background: linear-gradient(to right, #d97706, #c2410c);
+            }
+
+            /* Fix for all model icons in light mode */
+            .light-mode .from-purple-400.to-indigo-500 {
+                background: linear-gradient(to right, #8b5cf6, #6366f1);
+            }
+
+            .light-mode .from-blue-400.to-blue-600 {
+                background: linear-gradient(to right, #3b82f6, #2563eb);
+            }
+            
+            /* Beta tag - Desktop */
+            .beta-tag {
+                position: absolute;
+                top: -5px;
+                right: -40px;
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                color: white;
+                font-size: 0.65rem;
+                font-weight: 700;
+                padding: 0.25rem 0.5rem;
+                border-radius: 999px;
+                transform: rotate(20deg);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                letter-spacing: 0.05rem;
+                text-transform: uppercase;
+            }
+
+            /* H1 title containing the beta tag */
+            h1.gradient-text {
+                position: relative;
+                display: inline-block;
+            }
+
+            /* Stripe Donations Section */
+
+            .donation-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 0.75rem;
+        }
+
+        /* Light mode adjustments for donation section */
+
+        .light-mode #amount-modal .bg-gray-800 {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        }
+
+        .light-mode #amount-modal .bg-gray-700 {
+        background-color: var(--bg-secondary);
+        }
+
+        .light-mode .stripe-donation-container {
+            --primary-color: var(--accent-primary);
+            --background-color: var(--card-bg);
+            --text-color: var(--text-primary);
+        }
+
+        .donation-notice {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .donation-notice p {
+            margin: 0;
+            font-style: italic;
+        }
+
+            /* Whitepaper button - Desktop */
+            .whitepaper-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--accent-primary);
+                color: white;
+                border-radius: 24px;
+                padding: 0 20px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                z-index: 100;
+            }
+
+            .whitepaper-text {
+                font-size: 14px;
+                font-weight: 600;
+                margin-left: 6px;
+            }
+
+            /* Mobile adjustments */
+            @media (max-width: 640px) {
+                /* Beta tag mobile adjustments */
+                .beta-tag {
+                    top: 37px;
+                    right: -16px;
+                    font-size: 0.55rem;
+                    padding: 0.15rem 0.35rem;
+                    border-radius: 12px;
+                    line-height: 1.5;
+                    transform: rotate(-20deg);
+                }
+                
+                /* Mobile whitepaper button */
+                .whitepaper-btn {
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    padding: 0;
+                    bottom: 25px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                /* Hide the text on mobile */
+                .whitepaper-text {
+                    display: none;
+                }
+                .whitepaper-btn i {
+                    margin: auto;
+                }
+            }
+
+            /* Privacy notice styling */
+            .privacy-notice {
+                margin-top: 0.5rem;
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                text-align: center;
+            }
+
+            /* Confidence info tooltip */
+            .confidence-info {
+                position: relative;
+                display: inline-block;
+                margin-left: 0.5rem;
+                cursor: help;
+            }
+
+            .confidence-info .tooltip {
+                visibility: hidden;
+                width: 300px;
+                background-color: var(--bg-secondary);
+                color: var(--text-primary);
+                text-align: left;
+                border-radius: 6px;
+                padding: 10px;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%;
+                left: 50%;
+                margin-left: -150px;
+                opacity: 0;
+                transition: opacity 0.3s;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                font-weight: normal;
+                font-size: 0.75rem;
+                border: 1px solid var(--card-border);
+            }
+
+            .confidence-info .tooltip::after {
+                content: "";
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                margin-left: -5px;
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--bg-secondary) transparent transparent transparent;
+            }
+
+            .confidence-info:hover .tooltip {
+                visibility: visible;
+                opacity: 0.95;
+            }
+
+            /* Whitepaper modal styles */
+            .whitepaper-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--accent-primary);
+                color: white;
+                border-radius: 24px;
+                padding: 0 20px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                z-index: 100;
+            }
+
+            .whitepaper-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+            }
+
+            .whitepaper-text {
+                font-size: 14px;
+                font-weight: 600;
+            }
+
+            @media (max-width: 640px) {
+                .whitepaper-btn {
+                    height: 40px;
+                    padding: 0 15px;
+                    bottom: 15px;
+                    right: 15px;
+                }
+                
+                .whitepaper-text {
+                    font-size: 12px;
+                }
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(5px);
+            }
+
+            .modal-content {
+                background-color: var(--bg-primary);
+                margin: 5% auto;
+                padding: 20px;
+                border: 1px solid var(--card-border);
+                border-radius: 10px;
+                width: 80%;
+                max-width: 800px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+
+            .close-modal {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .close-modal:hover {
+                color: var(--text-primary);
+            }
+
+            @media (max-width: 640px) {
+                .input-field {
+                    font-size: 14px;
+                    padding: 0.75rem 0.5rem;
+                }
+                
+                .input-field::placeholder {
+                    font-size: 12px;
+                }
+                
+                .submit-btn {
+                    padding: 0.5rem 0.75rem;
+                    font-size: 14px;
+                }
+                
+                header {
+                    padding-top: 3rem;
+                }
+
+                .modal-content {
+                    width: 95%;
+                    margin: 10% auto;
+                }
+
+                .whitepaper-btn {
+                    width: 50px;
+                    height: 50px;
+                    bottom: 15px;
+                    right: 15px;
+                }
+            }
+        </style>
+        <!-- Stripe checkout JS -->
+        <script src="https://js.stripe.com/v3/"></script>
+    </head>
+    <body>
+        <div class="container mx-auto px-4 py-8">
+            <!-- Battery indicator positioned absolutely at top right -->
+            <div class="absolute top-2 right-4 z-10">
+                <i id="credit-battery" class="fas fa-battery-half text-yellow-500 text-4xl" title="API Credits: 50% remaining"></i>
+            </div>
+        
+            <header>
+                <h1 class="text-4xl md:text-5xl font-bold gradient-text text-center relative inline-block">
+                    Bullshit Detector
+                    <span class="beta-tag">Beta</span>
+                </h1>
+                <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
+                    <i class="fas fa-moon text-gray-400 hidden" id="moon-icon"></i>
+                    <i class="fas fa-sun text-yellow-400" id="sun-icon"></i>
+                </div>
+            </header>
+            
+            <p class="text-center text-gray-400 text-lg max-w-2xl mx-auto mb-12">
+                Verify claims across multiple AI models to detect truth from misinformation
+            </p>
+            
+            <div class="max-w-4xl mx-auto mb-12">
+                <div class="card rounded-xl p-6 shadow-lg">
+                    <form id="query-form" class="space-y-4" autocomplete="off">
+                        <div>
+                            <label for="query" class="block text-sm font-medium text-gray-400 mb-2">Enter a claim to verify</label>
+                            <div class="relative">
+                                <textarea 
+                                id="query" 
+                                name="query" 
+                                class="input-field w-full py-3 px-4 rounded-lg focus:outline-none resize-none overflow-hidden" 
+                                placeholder="Ex: Was the moon landing faked?"
+                                autocomplete="off"
+                                required
+                                rows="1"
+                            ></textarea>
+                                <button 
+                                    type="submit" 
+                                    class="submit-btn absolute right-2 top-1/2 transform -translate-y-1/2 rounded-lg px-4 py-1 text-white font-medium"
+                                >
+                                    Verify
+                                </button>
+                            </div>
+                            <p class="privacy-notice">
+                                <i class="fas fa-shield-alt mr-1"></i> No queries are logged or tracked. Your searches remain private. Donations keep API queries possible.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- Donation section with single button -->
+<div class="max-w-4xl mx-auto mb-8 text-center">
+    <button id="donate-btn" class="inline-block px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+        DONATE
+    </button>
+    
+    <div class="text-center mt-2">
+        <span class="text-sm text-gray-500">
+            <i class="fas fa-clock"></i> Credits update within about 24 hours
+        </span>
+    </div>
+</div>
+
+<!-- Modal for amount selection (hidden by default) -->
+<div id="amount-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+        <h3 class="text-xl font-semibold mb-4">Choose donation amount</h3>
+        
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <button class="amount-btn py-3 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold" data-amount="100">$1</button>
+            <button class="amount-btn py-3 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold" data-amount="300">$3</button>
+            <button class="amount-btn py-3 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold" data-amount="500">$5</button>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-2">Custom amount (min $1, max $10):</label>
+            <div class="flex">
+                <input type="number" id="custom-amount" min="1" max="10" step="1" class="flex-1 py-2 px-3 bg-gray-700 rounded-l-lg focus:outline-none">
+                <button id="custom-btn" class="bg-blue-500 hover:bg-blue-600 py-2 px-4 rounded-r-lg">Donate</button>
+            </div>
+        </div>
+        
+        <div class="flex justify-end">
+            <button id="close-amount-modal" class="text-gray-400 hover:text-white">Cancel</button>
+        </div>
+    </div>
+</div>
+            <div id="results" class="max-w-4xl mx-auto hidden">
+                <div class="card rounded-xl p-6 shadow-lg mb-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                        <div>
+                            <h2 class="text-xl font-semibold mb-1" id="claim-text">Was the moon landing faked?</h2>
+                            <div class="flex items-center">
+                                <div id="verdict-badge" class="px-3 py-1 rounded-full bg-green-500 text-white text-sm font-medium mr-3">
+                                    FALSE
+                                </div>
+                                <div class="text-sm text-gray-400" id="confidence-text">High Confidence</div>
+                                <div class="confidence-info">
+                                    <i class="fas fa-question-circle text-gray-400"></i>
+                                    <div class="tooltip">
+                                        <strong>How confidence is calculated:</strong>
+                                        <ul class="mt-1 ml-4 list-disc">
+                                            <li>VERY HIGH: Near-unanimous agreement with minimal uncertainty</li>
+                                            <li>HIGH: Strong agreement with limited uncertainty</li>
+                                            <li>MEDIUM: Majority agreement but with significant uncertainty</li>
+                                            <li>LOW: Weak agreement with substantial uncertainty</li>
+                                            <li>VERY LOW: No clear consensus or predominantly uncertain</li>
+                                        </ul>
+                                        <p class="mt-1">Based on consensus from multiple AI models, accounting for uncertainty, policy limitations, and contradictions.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 w-full md:w-1/3">
+                            <div class="confidence-bar">
+                                <div id="confidence-level" class="confidence-level truth-high" style="width: 95%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1 text-xs text-gray-400">
+                                <span>Low</span>
+                                <span>Medium</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="model-responses" class="space-y-4">
+                        <!-- GPT-4o Response -->
+                        <div class="model-response model-openai rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="flag-emoji">🇺🇸</span>
+                                    <div>
+                                        <h3 class="font-medium" id="gpt-model-name">GPT-4o</h3>
+                                        <div class="text-xs text-gray-400">OpenAI</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="gpt-response" class="text-gray-300">
+                                Loading response...
+                            </p>
+                        </div>
+                        
+                        <!-- Claude Response -->
+                        <div class="model-response model-claude rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="flag-emoji">🇺🇸</span>
+                                    <div>
+                                        <h3 class="font-medium" id="claude-model-name">Claude 3</h3>
+                                        <div class="text-xs text-gray-400">Anthropic</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="claude-response" class="text-gray-300">
+                                Loading response...
+                            </p>
+                        </div>
+                        
+                        <!-- Mistral Response -->
+                        <div class="model-response model-mistral rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="flag-emoji">🇫🇷</span>
+                                    <div>
+                                        <h3 class="font-medium" id="mistral-model-name">Mistral</h3>
+                                        <div class="text-xs text-gray-400">Mistral AI</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="mistral-response" class="text-gray-300">
+                                Loading response...
+                            </p>
+                        </div>
+                        
+                        <!-- DeepSeek Response -->
+                        <div class="model-response model-deepseek rounded-lg p-4 hidden">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="flag-emoji">🇨🇳</span>
+                                    <div>
+                                        <h3 class="font-medium" id="deepseek-model-name">DeepSeek</h3>
+                                        <div class="text-xs text-gray-400">DeepSeek AI</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="deepseek-response" class="text-gray-300">
+                                Loading response...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <button id="new-query-btn" class="text-blue-400 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> New Query
+                    </button>
+                    <div class="flex space-x-4">
+                        <button class="text-gray-400 hover:text-white transition">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button class="text-gray-400 hover:text-white transition">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="loading" class="max-w-4xl mx-auto text-center py-12 hidden">
+                <div class="loader mx-auto mb-4"></div>
+                <p class="text-gray-400">Analyzing with multiple AI models...</p>
+            </div>
+            
+            <footer class="mt-16 text-center text-gray-500 text-sm">
+                <p id="model-info" class="mb-2"></p>
+                <p>© 2025 Bullshit Detector - AI-powered misinformation detection</p>
+                <p>Haun built by<a href="https://glasgowshipyard.com" target="_blank" class="hover:underline"> Glasgow Shipyard</a>, a<a href="https://killc.co" target="_blank" class="hover:underline"> Kolmogorov Initiative</a>.</p>
+            </footer>
+        </div>
+        
+        <!-- Whitepaper button -->
+        <div class="whitepaper-btn" id="whitepaper-btn">
+        <i class="fas fa-file-alt mr-2"></i>
+        <span class="whitepaper-text">Whitepaper</span>
+        </div>
+
+        <!-- Whitepaper modal -->
+        <div id="whitepaper-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="close-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-4">Bullshit Detector Whitepaper</h2>
+                <p class="text-sm text-gray-400 mb-6">Written in <a href="https://usedumbdown.com" target="_blank" class="text-blue-400 hover:underline">Dumbdown</a></p>
+                
+                <div class="whitepaper-content">
+                    <!-- The content of your whitepaper will go here -->
+                    <p>Loading whitepaper content...</p>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            // Initialize Stripe
+            const stripe = Stripe('pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO');
+
+            // Main document ready function
+            document.addEventListener('DOMContentLoaded', function() {
+                const queryForm = document.getElementById('query-form');
+                const resultsSection = document.getElementById('results');
+                const loadingSection = document.getElementById('loading');
+                const newQueryBtn = document.getElementById('new-query-btn');
+                const claimText = document.getElementById('claim-text');
+                const gptResponse = document.getElementById('gpt-response');
+                const claudeResponse = document.getElementById('claude-response');
+                const mistralResponse = document.getElementById('mistral-response');
+                const deepseekResponse = document.getElementById('deepseek-response');
+
+                // Get model name elements
+                const gptModelName = document.getElementById('gpt-model-name');
+                const claudeModelName = document.getElementById('claude-model-name');
+                const mistralModelName = document.getElementById('mistral-model-name');
+                const deepseekModelName = document.getElementById('deepseek-model-name');
+
+                // Get model containers
+                const gptContainer = document.querySelector('.model-openai');
+                const claudeContainer = document.querySelector('.model-claude');
+                const mistralContainer = document.querySelector('.model-mistral');
+                const deepseekContainer = document.querySelector('.model-deepseek');
+                
+                const verdictBadge = document.getElementById('verdict-badge');
+                const confidenceLevel = document.getElementById('confidence-level');
+                const confidenceText = document.getElementById('confidence-text');
+                const modelInfo = document.getElementById('model-info');
+                
+                // Theme toggle elements
+                const themeToggle = document.getElementById('theme-toggle');
+                const moonIcon = document.getElementById('moon-icon');
+                const sunIcon = document.getElementById('sun-icon');
+
+                // Auto-expanding textarea
+                const textarea = document.getElementById('query');
+                textarea.addEventListener('input', function() {
+                    // Reset height to auto to get the correct scrollHeight
+                    this.style.height = 'auto';
+                    // Set height to scrollHeight (content height)
+                    this.style.height = this.scrollHeight + 'px';
+                });
+
+                // Reset on form submission
+                document.getElementById('query-form').addEventListener('submit', function() {
+                    textarea.style.height = 'auto';
+                });
+                
+                // Whitepaper modal elements
+                const whitepaperBtn = document.getElementById('whitepaper-btn');
+                const whitepaperModal = document.getElementById('whitepaper-modal');
+                const closeModal = document.getElementById('close-modal');
+                const whitepaperContent = document.querySelector('.whitepaper-content');
+                
+                // Donation elements
+                const donateBtn = document.getElementById('donate-btn');
+                const amountModal = document.getElementById('amount-modal');
+                const closeAmountModal = document.getElementById('close-amount-modal');
+                const amountBtns = document.querySelectorAll('.amount-btn');
+                const customBtn = document.getElementById('custom-btn');
+                
+                // Open whitepaper modal
+                whitepaperBtn.addEventListener('click', function() {
+                    whitepaperModal.style.display = 'block';
+                    // Here you would fetch and display the whitepaper content
+                    fetch('/static/whitepaper.txt')
+                        .then(response => response.text())
+                        .then(text => {
+                            // Format the text with proper line breaks
+                            const formattedText = text.replace(/\n/g, '<br>');
+                            whitepaperContent.innerHTML = formattedText;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching whitepaper:', error);
+                            whitepaperContent.innerHTML = `
+                                <h3 class="text-xl font-bold mb-4">Executive Summary</h3>
+                                <p class="mb-3">Bullshit Detector tackles misinformation by leveraging consensus across multiple advanced language models.</p>
+                                <p class="mb-3">The system provides rapid verification with transparent confidence indicators, distinguishing between uncertain claims and factually incorrect information.</p>
+                                <p class="mb-3">Novel approach focuses on epistemic humility while still providing actionable insights.</p>
+                                
+                                <h3 class="text-xl font-bold mt-6 mb-4">The Problem</h3>
+                                <p class="mb-3">Misinformation is cheaply produced but costly to debunk (Brandolini's Law).</p>
+                                <p class="mb-3">The asymmetric effort between creating misinformation and refuting it has shifted from primarily cognitive cost to environmental and computational cost with AI.</p>
+                                
+                                <h3 class="text-xl font-bold mt-6 mb-4">Approach</h3>
+                                <p class="mb-3">Aggregate responses from diverse state-of-the-art language models (GPT-4o, Claude 3, Mistral, DeepSeek).</p>
+                                <p class="mb-3">Each model comes from a different AI lab with different training methodologies, reducing shared blind spots.</p>
+                                
+                                <p class="mt-6 text-sm text-gray-400">For the full whitepaper, please contact the developers.</p>
+                            `;
+                        });
+                });
+                
+                // Close modal when clicking the X
+                closeModal.addEventListener('click', function() {
+                    whitepaperModal.style.display = 'none';
+                });
+                
+                // Close modal when clicking outside of it
+                window.addEventListener('click', function(event) {
+                    if (event.target == whitepaperModal) {
+                        whitepaperModal.style.display = 'none';
+                    }
+                });
+                
+                // Check system preference for dark/light mode
+                function checkSystemPreference() {
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                        document.body.classList.add('light-mode');
+                        moonIcon.classList.remove('hidden');
+                        sunIcon.classList.add('hidden');
+                    } else {
+                        document.body.classList.remove('light-mode');
+                        moonIcon.classList.add('hidden');
+                        sunIcon.classList.remove('hidden');
+                    }
+                }
+                
+                // Initial check for system preference
+                checkSystemPreference();
+                
+                // Listen for system preference changes
+                window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', checkSystemPreference);
+                
+                // Toggle theme when button is clicked
+                themeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('light-mode');
+                    moonIcon.classList.toggle('hidden');
+                    sunIcon.classList.toggle('hidden');
+                });
+                
+                // Helper function to ensure proper sentence casing
+                function capitalizeFirstLetter(string) {
+                    return string.charAt(0).toUpperCase() + string.slice(1);
+                }
+                
+                // Fetch model metadata
+                async function fetchModelMetadata() {
+                    try {
+                        const response = await fetch('/api/model-metadata');
+                        console.log("Metadata fetch status:", response.status);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log("Metadata loaded:", data);
+                            updateModelInfo(data);
+                        } else {
+                            console.error("Failed to fetch metadata:", response.statusText);
+                            modelInfo.textContent = "Models trained on data up to: 2023";
+                        }
+                    } catch (error) {
+                        console.error('Error fetching model metadata:', error);
+                        modelInfo.textContent = "Models trained on data up to: 2023";
+                    }
+                }
+                
+                // Update model info in footer
+                function updateModelInfo(data) {
+                    if (data && data.models) {
+                        // Nice names for each model
+                        const niceNames = {
+                            'openai': 'GPT-5',
+                            'anthropic': 'Claude Haiku',
+                            'mistral': 'Mistral Medium',
+                            'deepseek': 'DeepSeek'
+                        };
+
+                        // Update model name labels with nice names and tooltips
+                        const updateModelDisplay = (modelKey, nameElement) => {
+                            if (data.models[modelKey] && data.models[modelKey].id) {
+                                const niceName = niceNames[modelKey];
+                                const displayName = data.models[modelKey].display_name;
+                                const modelId = data.models[modelKey].id;
+                                const tooltip = displayName || modelId;
+
+                                // Create the display: "Nice Name ?"
+                                nameElement.innerHTML = `${niceName} <span class="text-xs text-gray-400 cursor-help" title="${tooltip}">?</span>`;
+                            }
+                        };
+
+                        updateModelDisplay('openai', gptModelName);
+                        updateModelDisplay('anthropic', claudeModelName);
+                        updateModelDisplay('mistral', mistralModelName);
+                        updateModelDisplay('deepseek', deepseekModelName);
+
+                        const modelInfos = [];
+
+                        for (const [modelId, modelData] of Object.entries(data.models)) {
+                            if (modelData && modelData.docs_url && modelData.provider) {
+                                // Create clickable link to docs
+                                const link = document.createElement('a');
+                                link.href = modelData.docs_url;
+                                link.target = '_blank';
+                                link.rel = 'noopener noreferrer';
+                                link.textContent = modelData.provider;
+                                link.style.color = 'inherit';
+                                link.style.textDecoration = 'underline';
+                                link.style.cursor = 'pointer';
+                                modelInfos.push(link);
+                            }
+                        }
+
+                        if (modelInfos.length > 0) {
+                            modelInfo.innerHTML = "";
+                            const prefix = document.createElement('span');
+                            prefix.textContent = "Model docs: ";
+                            modelInfo.appendChild(prefix);
+
+                            modelInfos.forEach((link, index) => {
+                                if (index > 0) {
+                                    const separator = document.createElement('span');
+                                    separator.textContent = ' • ';
+                                    modelInfo.appendChild(separator);
+                                }
+                                modelInfo.appendChild(link);
+                            });
+                        } else {
+                            modelInfo.textContent = "Model training data information unavailable";
+                        }
+                    } else {
+                        modelInfo.textContent = "Model training data information unavailable";
+                    }
+                }
+                
+                // Fetch metadata on load
+                fetchModelMetadata();
+                
+                queryForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const query = document.getElementById('query').value;
+                    
+                    if (query.trim() === '') return;
+                    
+                    // Show loading
+                    resultsSection.classList.add('hidden');
+                    loadingSection.classList.remove('hidden');
+                    
+                    // Reset responses and hide all model containers initially
+                    gptContainer.classList.add('hidden');
+                    claudeContainer.classList.add('hidden');
+                    mistralContainer.classList.add('hidden');
+                    deepseekContainer.classList.add('hidden');
+                    
+                    // Make API request
+                    fetch('/ask', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query: query }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update UI with results - ensure proper capitalization
+                        claimText.textContent = capitalizeFirstLetter(data.query);
+                        
+                        // Only show models with successful responses
+                        if (data.responses['openai'] && data.responses['openai'].success) {
+                            gptContainer.classList.remove('hidden');
+                            gptResponse.textContent = data.responses['openai'].content;
+                            gptResponse.classList.remove('text-red-400');
+                        }
+
+                        if (data.responses['anthropic'] && data.responses['anthropic'].success) {
+                            claudeContainer.classList.remove('hidden');
+                            claudeResponse.textContent = data.responses['anthropic'].content;
+                            claudeResponse.classList.remove('text-red-400');
+                        }
+                        
+                        if (data.responses['mistral'] && data.responses['mistral'].success) {
+                            mistralContainer.classList.remove('hidden');
+                            mistralResponse.textContent = data.responses['mistral'].content;
+                            mistralResponse.classList.remove('text-red-400');
+                        }
+                        
+                        // Handle DeepSeek if available
+                        if (data.responses['deepseek'] && data.responses['deepseek'].success) {
+                            deepseekContainer.classList.remove('hidden');
+                            deepseekResponse.textContent = data.responses['deepseek'].content;
+                            deepseekResponse.classList.remove('text-red-400');
+                        }
+                        
+                        // Use the analysis data if available, otherwise calculate it client-side
+                        if (data.analysis) {
+                            updateVerdict(data.analysis);
+                        } else {
+                            // Fallback to client-side analysis (for backward compatibility)
+                            analyzeClientSide(data.responses);
+                        }
+                        
+                        // Show results
+                        loadingSection.classList.add('hidden');
+                        resultsSection.classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        loadingSection.classList.add('hidden');
+                        alert('An error occurred while processing your request.');
+                    });
+                });
+                
+                function updateVerdict(analysis) {
+                    // Update verdict badge
+                    verdictBadge.textContent = analysis.verdict;
+                    
+                    // Update badge color
+                    verdictBadge.className = 'px-3 py-1 rounded-full text-white text-sm font-medium mr-3';
+                    if (analysis.verdict === 'TRUE') {
+                        verdictBadge.classList.add('bg-green-500');
+                    } else if (analysis.verdict === 'FALSE') {
+                        verdictBadge.classList.add('bg-red-500');
+                    } else {
+                        verdictBadge.classList.add('bg-yellow-500');
+                    }
+                    
+                    // Update confidence text
+                    confidenceText.textContent = analysis.confidence_level + ' Confidence';
+                    
+                    // Update confidence bar
+                    confidenceLevel.style.width = analysis.confidence_percentage + '%';
+                    
+                    // Update confidence bar color
+                    confidenceLevel.className = 'confidence-level';
+                    if (analysis.confidence_percentage >= 70) {
+                        confidenceLevel.classList.add('truth-high');
+                    } else if (analysis.confidence_percentage >= 40) {
+                        confidenceLevel.classList.add('truth-medium');
+                    } else {
+                        confidenceLevel.classList.add('truth-low');
+                    }
+                }
+                
+                function analyzeClientSide(responses) {
+                    // Fallback for older API responses
+                    // Simple check for TRUE/FALSE in content
+                    let trueCount = 0;
+                    let falseCount = 0;
+                    let uncertainCount = 0;
+                    let totalValid = 0;
+                    
+                    for (const model in responses) {
+                        if (responses[model].success && responses[model].content) {
+                            totalValid++;
+                            const content = responses[model].content.toUpperCase();
+                            const textHasUncertainty = content.includes("CANNOT BE DEFINITIVELY") || 
+                                                    content.includes("COMPLEX") || 
+                                                    content.includes("UNCERTAIN") ||
+                                                    content.includes("NOT ENOUGH EVIDENCE") ||
+                                                    content.includes("CANNOT GIVE A TRUE/FALSE");
+                            
+                            if (textHasUncertainty) {
+                                uncertainCount++;
+                            } else if (content.includes('TRUE') && !content.includes('FALSE')) {
+                                trueCount++;
+                            } else if (content.includes('FALSE')) {
+                                falseCount++;
+                            } else {
+                                uncertainCount++;
+                            }
+                        }
+                    }
+                    
+                    // Determine verdict
+                    let verdict = 'UNCERTAIN';
+                    if (uncertainCount > totalValid/3) {
+                        verdict = 'UNCERTAIN'; // If significant uncertainty, prioritize it
+                    } else if (trueCount > falseCount) {
+                        verdict = 'TRUE';
+                    } else if (falseCount > trueCount) {
+                        verdict = 'FALSE';
+                    }
+                    
+                    // Calculate confidence
+                    let confidence = 0;
+                    if (totalValid > 0) {
+                        if (verdict === 'UNCERTAIN') {
+                            confidence = (uncertainCount / totalValid) * 100;
+                        } else {
+                            const mainCount = verdict === 'TRUE' ? trueCount : falseCount;
+                            confidence = (mainCount / totalValid) * 100;
+                            // Reduce confidence if there's any uncertainty
+                            if (uncertainCount > 0) {
+                                confidence = Math.max(40, confidence - (uncertainCount * 15));
+                            }
+                        }
+                    }
+                    
+                    // Determine confidence level
+                    let confidenceLevelText = 'Low';
+                    if (confidence >= 90) {
+                        confidenceLevelText = 'Very High';
+                    } else if (confidence >= 70) {
+                        confidenceLevelText = 'High';
+                    } else if (confidence >= 50) {
+                        confidenceLevelText = 'Medium';
+                    }
+                    
+                    // Update UI
+                    updateVerdict({
+                        verdict: verdict,
+                        confidence_percentage: Math.round(confidence),
+                        confidence_level: confidenceLevelText
+                    });
+                }
+                
+                newQueryBtn.addEventListener('click', function() {
+                    resultsSection.classList.add('hidden');
+                    document.getElementById('query').value = '';
+                    document.getElementById('query').focus();
+                });
+                
+                // Battery status update
+                function updateBatteryStatus() {
+                    fetch('/api/credit-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update battery icon
+                        const batteryIcon = document.getElementById('credit-battery');
+                        
+                        // Clear previous classes
+                        batteryIcon.className = 'fas';
+                        
+                        // Add appropriate battery icon class
+                        batteryIcon.classList.add(data.icon);
+                        
+                        // Add appropriate color class
+                        if (data.status === 'green') {
+                            batteryIcon.classList.add('text-green-500');
+                        } else if (data.status === 'yellow') {
+                            batteryIcon.classList.add('text-yellow-500');
+                        } else if (data.status === 'red') {
+                            batteryIcon.classList.add('text-red-500');
+                        } else {
+                            batteryIcon.classList.add('text-gray-400');
+                        }
+                        
+                        // Update tooltip
+                        batteryIcon.title = `API Credits: ${data.percentage}% remaining`;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching battery status:', error);
+                        // Set to unknown state
+                        document.getElementById('credit-battery').className = 'fas fa-battery text-gray-400';
+                    });
+                }
+                
+                // Call on page load and set interval
+                updateBatteryStatus();
+                
+                // Check battery status every 5 minutes
+                setInterval(updateBatteryStatus, 5 * 60 * 1000);
+                
+                // Donation functionality
+                if (donateBtn) {
+                    donateBtn.addEventListener('click', function() {
+                        amountModal.classList.remove('hidden');
+                    });
+                }
+                
+                // Close amount modal
+                if (closeAmountModal) {
+                    closeAmountModal.addEventListener('click', function() {
+                        amountModal.classList.add('hidden');
+                    });
+                }
+                
+                // Handle preset donation amounts
+                if (amountBtns) {
+                    amountBtns.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const amount = parseInt(this.dataset.amount);
+                            createCheckout(amount);
+                        });
+                    });
+                }
+                
+                // Handle custom donation amount
+                if (customBtn) {
+                    customBtn.addEventListener('click', function() {
+                        const amount = parseFloat(document.getElementById('custom-amount').value);
+                        if (amount && amount >= 1 && amount <= 10) {
+                            // Convert to cents for Stripe
+                            createCheckout(Math.round(amount * 100));
+                        } else {
+                            alert('Please enter an amount between $1 and $10');
+                        }
+                    });
+                }
+            });
+
+            // Create Stripe checkout session
+            async function createCheckout(amount) {
+                try {
+                    const amountModal = document.getElementById('amount-modal');
+                    if (amountModal) {
+                        amountModal.classList.add('hidden');
+                    }
+                    
+                    const response = await fetch('/create-checkout-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: amount })
+                    });
+                    
+                    const session = await response.json();
+                    
+                    if (session.error) {
+                        console.error('Session error:', session.error);
+                        alert('Error: ' + session.error);
+                        return;
+                    }
+                    
+                    // Redirect to Stripe Checkout
+                    const { error } = await stripe.redirectToCheckout({
+                        sessionId: session.id
+                    });
+                    
+                    if (error) {
+                        console.error('Stripe error:', error);
+                        alert('Payment error: ' + error.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Something went wrong. Please try again.');
+                }
+            }
+            
+        </script>
+        </div>
+    </body>
+    </html>
