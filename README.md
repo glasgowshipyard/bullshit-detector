@@ -45,49 +45,26 @@ The Bullshit Detector addresses the modern evolution of Brandolini's Law - where
 ## Technical Architecture
 
 ### Backend
-- **Flask** web application with RESTful API
+- **Cloudflare Workers** (TypeScript) with RESTful API
 - **Multi-provider AI integration** (OpenAI, Anthropic, Mistral, DeepSeek)
-- **Background scheduler** for model metadata updates
-- **Heroku deployment** with web and worker dynos
+- **Cron Triggers** for scheduled model metadata updates
+- **Workers KV** for persistent edge storage
 
 ### Frontend
+- **Cloudflare Pages** serving static HTML
 - **Responsive design** with dark/light mode support
 - **Real-time results** with animated loading states
-- **Accessibility features** and mobile-friendly interface
 - **Tailwind CSS** for modern styling
 
 ### Key Files
-- `app.py` - Main Flask application and API endpoints
-- `preprocess.py` - Query preprocessing and normalization
-- `metadata_scheduler.py` - Background model metadata collection
-- `templates/index.html` - Frontend interface
+- `src/worker.ts` - Main Workers entry point and API endpoints
+- `src/utils/preprocess.ts` - Query preprocessing and normalization
+- `src/scheduled/discovery.ts` - Background model metadata collection
+- `public/index.html` - Frontend interface
 
-## Installation
+## Deployment
 
-1. Clone the repository:
-```bash
-git clone https://github.com/glasgowshipyard/bullshit-detector.git
-cd bullshit-detector
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Set environment variables:
-```bash
-export OPENAI_API_KEY="your_openai_key"
-export CLAUDE_API_KEY="your_anthropic_key"  
-export MISTRAL_API_KEY="your_mistral_key"
-export DEEPSEEK_API_KEY="your_deepseek_key"
-export STRIPE_SECRET_KEY="your_stripe_key"  # Optional for donations
-```
-
-4. Run the application:
-```bash
-python app.py
-```
+See [DEPLOY.md](DEPLOY.md) for Cloudflare deployment instructions.
 
 ## API Usage
 

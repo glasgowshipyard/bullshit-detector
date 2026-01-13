@@ -21,3 +21,19 @@ wheels/
 *.egg
 .DS_Store
 .env
+
+# Node.js / TypeScript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Cloudflare Workers
+.wrangler/
+.dev.vars
+worker.js
+worker.js.map
+
+# TypeScript
+*.tsbuildinfo

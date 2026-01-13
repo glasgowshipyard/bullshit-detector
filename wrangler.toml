@@ -1,0 +1,26 @@
+name = "bullshit-detector"
+main = "src/worker.ts"
+compatibility_date = "2025-01-11"
+
+# Note: KV namespace IDs will be added after user creates them
+# Run: wrangler kv:namespace create "CACHE"
+# Run: wrangler kv:namespace create "CACHE" --preview
+
+# Uncomment and add IDs after KV namespace creation:
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "YOUR_KV_NAMESPACE_ID"
+# preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID"
+
+# Cron triggers for scheduled tasks (model discovery + credit status)
+# Runs daily at 00:00 UTC
+[[triggers.crons]]
+crons = ["0 0 * * *"]
+
+# Environment variables (set via: wrangler secret put <KEY_NAME>)
+# Required secrets:
+# - OPENAI_API_KEY
+# - CLAUDE_API_KEY
+# - MISTRAL_API_KEY
+# - DEEPSEEK_API_KEY
+# - STRIPE_SECRET_KEY
