@@ -7,8 +7,8 @@
     "docs_url": "https://platform.openai.com/docs/models"
   },
   "anthropic": {
-    "id": "claude-3-opus-20240229",
-    "display_name": "Claude 3 Opus",
+    "id": "claude-sonnet-4-5-20250929",
+    "display_name": "Claude Sonnet 4.5",
     "docs_url": "https://docs.anthropic.com/about-claude/models/overview"
   },
   "mistral": {
