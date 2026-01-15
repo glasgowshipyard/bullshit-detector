@@ -16,9 +16,9 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
 
   try {
     const body = (await request.json()) as any;
-    const amount = body.amount || 5; // Default $5
+    const amount = body.amount || 500; // Default $5.00 in cents
 
-    if (amount < 1 || amount > 10) {
+    if (amount < 100 || amount > 1000) {
       return new Response(JSON.stringify({ error: 'Amount must be between $1 and $10' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -39,7 +39,7 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
               name: 'Bullshit Detector Donation',
               description: 'Support ongoing AI API costs',
             },
-            unit_amount: amount * 100, // Convert to cents
+            unit_amount: amount, // Already in cents from frontend
           },
           quantity: 1,
         },
@@ -49,7 +49,7 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
       cancel_url: 'https://bullshitdetector.ai',
     });
 
-    return new Response(JSON.stringify({ sessionId: session.id }), {
+    return new Response(JSON.stringify({ id: session.id }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
