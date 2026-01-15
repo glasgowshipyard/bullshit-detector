@@ -2,6 +2,15 @@ name = "bullshit-detector"
 main = "src/worker.ts"
 compatibility_date = "2025-01-11"
 
+# Routes for custom domain integration with Pages
+# These tell Cloudflare to route API requests to the Worker instead of Pages
+routes = [
+  "bullshitdetector.ai/ask",
+  "bullshitdetector.ai/api/*",
+  "bullshitdetector.ai/create-checkout-session",
+  "bullshitdetector.ai/success"
+]
+
 # Note: KV namespace IDs will be added after user creates them
 # Run: wrangler kv:namespace create "CACHE"
 # Run: wrangler kv:namespace create "CACHE" --preview
