@@ -6,15 +6,14 @@ compatibility_date = "2025-01-11"
 # Run: wrangler kv:namespace create "CACHE"
 # Run: wrangler kv:namespace create "CACHE" --preview
 
-# Uncomment and add IDs after KV namespace creation:
-# [[kv_namespaces]]
-# binding = "CACHE"
-# id = "YOUR_KV_NAMESPACE_ID"
-# preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID"
+[[kv_namespaces]]
+binding = "CACHE"
+id = "a3d2508ca6ea43118f4110e1197ec299"
+preview_id = "fa625075ce614e41946719fdef703e0d"
 
 # Cron triggers for scheduled tasks (model discovery + credit status)
 # Runs daily at 00:00 UTC
-[[triggers.crons]]
+[triggers]
 crons = ["0 0 * * *"]
 
 # Environment variables (set via: wrangler secret put <KEY_NAME>)
@@ -24,3 +23,4 @@ crons = ["0 0 * * *"]
 # - MISTRAL_API_KEY
 # - DEEPSEEK_API_KEY
 # - STRIPE_SECRET_KEY
+# - GEMINI_API_KEY
