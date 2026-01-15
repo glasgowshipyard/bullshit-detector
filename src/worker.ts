@@ -40,7 +40,7 @@ export default {
   /**
    * HTTP request handler
    */
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // CORS headers
@@ -108,7 +108,7 @@ export default {
    * Scheduled task handler (Cron Triggers)
    * Runs daily at 00:00 UTC
    */
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('Scheduled task triggered at:', new Date(event.scheduledTime).toISOString());
 
     // Run model discovery and credit status update in parallel

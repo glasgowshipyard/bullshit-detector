@@ -1,7 +1,9 @@
 import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
 export default [
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     languageOptions: {
       ecmaVersion: 'latest',
@@ -30,8 +32,10 @@ export default [
       },
     },
     rules: {
-      'no-console': 'warn',
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-console': 'off', // Allow console in Cloudflare Workers
+      'no-unused-vars': 'off', // Using TS version instead
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn', // Warn but don't fail on any
       'no-var': 'error',
       'prefer-const': 'error',
       'eqeqeq': ['error', 'always'],
@@ -43,7 +47,7 @@ export default [
         { max: 100, skipBlankLines: true, skipComments: true },
       ],
       'max-params': ['warn', 4],
-      'no-magic-numbers': ['warn', { ignore: [0, 1, -1], ignoreArrayIndexes: true }],
+      'no-magic-numbers': 'off', // Too noisy for this project
       'no-duplicate-imports': 'error',
       'no-eval': 'error',
       'no-implied-eval': 'error',

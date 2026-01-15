@@ -26,7 +26,9 @@ export interface ConsensusAnalysis {
  * Strip markdown formatting from text
  */
 export function stripMarkdown(text: string): string {
-  if (!text) return text;
+  if (!text) {
+    return text;
+  }
 
   let processed = text;
 
@@ -61,7 +63,7 @@ function detectRecusal(content: string): boolean {
     /\bunanswerable by design\b/i,
   ];
 
-  return recusalPatterns.some((pattern) => pattern.test(content));
+  return recusalPatterns.some(pattern => pattern.test(content));
 }
 
 /**
@@ -80,7 +82,7 @@ function detectPolicyLimitation(content: string): boolean {
     /\bi'm not comfortable speculating\b/i,
   ];
 
-  return policyPatterns.some((pattern) => pattern.test(content));
+  return policyPatterns.some(pattern => pattern.test(content));
 }
 
 /**
@@ -131,17 +133,25 @@ export function analyzeResponses(responses: Record<string, ModelResponse>): Cons
     const contentLower = response.content.toLowerCase();
 
     // Check for uncertainty indicators
-    const uncertain = uncertaintyPatterns.some((pattern) => contentLower.includes(pattern));
+    const uncertain = uncertaintyPatterns.some(pattern => contentLower.includes(pattern));
 
     // Extract explicit judgments
-    if (contentUpper.includes('FALSE') && !contentUpper.includes('NOT FALSE') && !contentUpper.includes("ISN'T FALSE")) {
+    if (
+      contentUpper.includes('FALSE') &&
+      !contentUpper.includes('NOT FALSE') &&
+      !contentUpper.includes("ISN'T FALSE")
+    ) {
       if (uncertain) {
         judgments[model] = 'UNCERTAIN';
         uncertainResponses.push(model);
       } else {
         judgments[model] = 'FALSE';
       }
-    } else if (contentUpper.includes('TRUE') && !contentUpper.includes('NOT TRUE') && !contentUpper.includes("ISN'T TRUE")) {
+    } else if (
+      contentUpper.includes('TRUE') &&
+      !contentUpper.includes('NOT TRUE') &&
+      !contentUpper.includes("ISN'T TRUE")
+    ) {
       if (uncertain) {
         judgments[model] = 'UNCERTAIN';
         uncertainResponses.push(model);
@@ -175,9 +185,9 @@ export function analyzeResponses(responses: Record<string, ModelResponse>): Cons
     majorityVerdict = 'UNCERTAIN';
   } else {
     // Otherwise use the most common verdict
-    majorityVerdict = (
-      Object.entries(judgmentCounts).reduce((a, b) => (b[1] > a[1] ? b : a))[0] as Classification
-    );
+    majorityVerdict = Object.entries(judgmentCounts).reduce((a, b) =>
+      b[1] > a[1] ? b : a
+    )[0] as Classification;
   }
 
   // If there's a tie between TRUE and FALSE, use UNCERTAIN
@@ -199,7 +209,7 @@ export function analyzeResponses(responses: Record<string, ModelResponse>): Cons
     } else {
       // For TRUE/FALSE verdicts
       const policyAligned = policyLimitedResponses.filter(
-        (model) => judgments[model] === majorityVerdict
+        model => judgments[model] === majorityVerdict
       ).length;
 
       const nonPolicyTotal = totalModels - policyLimitedResponses.length;
