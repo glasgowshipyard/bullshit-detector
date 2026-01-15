@@ -1,0 +1,33 @@
+# Dependabot configuration for automatic dependency updates
+# Copy this to .github/dependabot.yml in each repo
+
+version: 2
+updates:
+  # Update NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"  # Check for updates monthly
+    open-pull-requests-limit: 5
+    # Group quality tool updates together
+    groups:
+      quality-tools:
+        patterns:
+          - "eslint*"
+          - "prettier*"
+          - "husky*"
+          - "lint-staged*"
+          - "typescript*"
+    # Auto-approve patch and minor updates for quality tools
+    labels:
+      - "dependencies"
+      - "quality-tools"
+
+  # Update GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "github-actions"
