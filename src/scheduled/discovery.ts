@@ -95,10 +95,11 @@ export async function discoverLatestModels(env: Env): Promise<void> {
     anthropic: 'https://docs.anthropic.com/about-claude/models/overview',
     mistral: 'https://docs.mistral.ai/getting-started/models/',
     deepseek: 'https://api-docs.deepseek.com/models',
+    gemini: 'https://ai.google.dev/gemini-api/docs',
   };
 
   // Discover models from each provider in parallel
-  const [openai, anthropic, mistral, deepseek] = await Promise.all([
+  const [openai, anthropic, mistral, deepseek, gemini] = await Promise.all([
     discoverProvider(
       'openai',
       'https://api.openai.com/v1/models',
@@ -120,6 +121,12 @@ export async function discoverLatestModels(env: Env): Promise<void> {
     discoverProvider('deepseek', 'https://api.deepseek.com/v1/models', {
       Authorization: `Bearer ${env.DEEPSEEK_API_KEY}`,
     }),
+    discoverProvider(
+      'gemini',
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${env.GEMINI_API_KEY}`,
+      {},
+      (model) => model.id.startsWith('models/gemini-') // Only Gemini models
+    ),
   ]);
 
   // Build config data
@@ -131,13 +138,16 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       : { id: 'gpt-4o', display_name: null, docs_url: docsUrls.openai },
     anthropic: anthropic
       ? { ...anthropic, docs_url: docsUrls.anthropic }
-      : { id: 'claude-3-opus-20240229', display_name: 'Claude 3 Opus', docs_url: docsUrls.anthropic },
+      : { id: 'claude-sonnet-4-5-20250929', display_name: 'Claude Sonnet 4.5', docs_url: docsUrls.anthropic },
     mistral: mistral
       ? { ...mistral, docs_url: docsUrls.mistral }
       : { id: 'mistral-large-latest', display_name: null, docs_url: docsUrls.mistral },
     deepseek: deepseek
       ? { ...deepseek, docs_url: docsUrls.deepseek }
       : { id: 'deepseek-chat', display_name: null, docs_url: docsUrls.deepseek },
+    gemini: gemini
+      ? { ...gemini, docs_url: docsUrls.gemini }
+      : { id: 'gemini-2.0-flash-exp', display_name: 'Gemini 2.0 Flash', docs_url: docsUrls.gemini },
   };
 
   // Save to Workers KV

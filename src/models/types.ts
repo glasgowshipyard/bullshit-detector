@@ -15,6 +15,7 @@ export interface FullModelConfig {
   anthropic: ModelConfig;
   mistral: ModelConfig;
   deepseek: ModelConfig;
+  gemini: ModelConfig;
 }
 
 export interface ModelResponse {
@@ -29,6 +30,7 @@ export interface Env {
   CLAUDE_API_KEY: string;
   MISTRAL_API_KEY: string;
   DEEPSEEK_API_KEY: string;
+  GEMINI_API_KEY: string;
   STRIPE_SECRET_KEY: string;
   CACHE: KVNamespace;
 }
