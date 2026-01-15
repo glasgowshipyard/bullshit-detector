@@ -813,6 +813,13 @@
             // Initialize Stripe
             const stripe = Stripe('pk_live_51RPqbr08JDyCKj5sePt4dBQclBWFs0wy49MZiKvipZ1Tm4znUYgpwNZygLqDpoxFvPigGreOGB1M4HpIF1fj9qAE002OAp8TSO');
 
+            // API Base URL - uses relative paths by default, falls back to workers.dev if needed
+            // On custom domain (bullshitdetector.ai), routes are configured to proxy to Worker
+            // On pages.dev preview URLs, this won't work, so fallback to workers.dev
+            const API_BASE = window.location.hostname.includes('.pages.dev')
+                ? 'https://bullshit-detector.dev-a4b.workers.dev'
+                : '';
+
             // Main document ready function
             document.addEventListener('DOMContentLoaded', function() {
                 const queryForm = document.getElementById('query-form');
@@ -955,7 +962,7 @@
                 // Fetch model metadata
                 async function fetchModelMetadata() {
                     try {
-                        const response = await fetch('/api/model-metadata');
+                        const response = await fetch(`${API_BASE}/api/model-metadata`);
                         console.log("Metadata fetch status:", response.status);
                         
                         if (response.ok) {
@@ -1063,7 +1070,7 @@
                     geminiContainer.classList.add('hidden');
 
                     // Make API request
-                    fetch('/ask', {
+                    fetch(`${API_BASE}/ask`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1239,7 +1246,7 @@
                 
                 // Battery status update
                 function updateBatteryStatus() {
-                    fetch('/api/credit-status')
+                    fetch(`${API_BASE}/api/credit-status`)
                     .then(response => response.json())
                     .then(data => {
                         // Update battery icon
@@ -1324,7 +1331,7 @@
                         amountModal.classList.add('hidden');
                     }
                     
-                    const response = await fetch('/create-checkout-session', {
+                    const response = await fetch(`${API_BASE}/create-checkout-session`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ amount: amount })

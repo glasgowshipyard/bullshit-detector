@@ -2,8 +2,10 @@ name = "bullshit-detector"
 main = "src/worker.ts"
 compatibility_date = "2025-01-11"
 
-# Routes for custom domain integration with Pages
-# These tell Cloudflare to route API requests to the Worker instead of Pages
+# Enable workers.dev subdomain for API access
+workers_dev = true
+
+# Routes for custom domain (if configured)
 routes = [
   "bullshitdetector.ai/ask",
   "bullshitdetector.ai/api/*",
