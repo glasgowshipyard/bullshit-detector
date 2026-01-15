@@ -7,7 +7,10 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -23,6 +26,10 @@
   "homepage": "https://github.com/glasgowshipyard/bullshit-detector#readme",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260111.0",
+    "eslint": "^9.39.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.58.0"
   },
@@ -31,5 +38,14 @@
     "@mistralai/mistralai": "^1.11.0",
     "openai": "^6.16.0",
     "stripe": "^20.1.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }
