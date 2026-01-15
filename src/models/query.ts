@@ -219,17 +219,74 @@ async function queryDeepSeek(prompt: string, env: Env): Promise<ModelResponse> {
 }
 
 /**
+ * Query Google Gemini API
+ */
+async function queryGemini(prompt: string, env: Env): Promise<ModelResponse> {
+  try {
+    const config = await loadModelConfig(env);
+    const modelId = config.gemini.id;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Gemini error: ${errorText.substring(0, 200)}`);
+      return {
+        success: false,
+        content: null,
+        model: 'gemini',
+        error: `API returned ${response.status}`,
+      };
+    }
+
+    const data = await response.json();
+    const content = getValueAtPath(data, ['candidates', 0, 'content', 'parts', 0, 'text']);
+
+    return {
+      success: true,
+      content: stripMarkdown(content),
+      model: 'gemini',
+    };
+  } catch (error: any) {
+    console.error(`Error querying Gemini: ${error.message}`);
+    return {
+      success: false,
+      content: null,
+      model: 'gemini',
+      error: error.message || 'Unknown error',
+    };
+  }
+}
+
+/**
  * Query all AI providers in parallel
  */
 export async function queryAllModels(
   prompt: string,
   env: Env
 ): Promise<Record<string, ModelResponse>> {
-  const [openaiResponse, anthropicResponse, mistralResponse, deepseekResponse] = await Promise.all([
+  const [openaiResponse, anthropicResponse, mistralResponse, deepseekResponse, geminiResponse] = await Promise.all([
     queryOpenAI(prompt, env),
     queryAnthropic(prompt, env),
     queryMistral(prompt, env),
     queryDeepSeek(prompt, env),
+    queryGemini(prompt, env),
   ]);
 
   return {
@@ -237,5 +294,6 @@ export async function queryAllModels(
     anthropic: anthropicResponse,
     mistral: mistralResponse,
     deepseek: deepseekResponse,
+    gemini: geminiResponse,
   };
 }

@@ -148,7 +148,11 @@
             .model-deepseek {
                 border-left-color: #f59e0b;
             }
-            
+
+            .model-gemini {
+                border-left-color: #ef4444;
+            }
+
             .loader {
                 border: 3px solid rgba(255, 255, 255, 0.1);
                 border-radius: 50%;
@@ -736,6 +740,25 @@
                                 Loading response...
                             </p>
                         </div>
+
+                        <!-- Gemini Response -->
+                        <div class="model-response model-gemini rounded-lg p-4 hidden">
+                            <div class="flex items-center mb-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-red-400 to-pink-500 flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot text-white"></i>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="flag-emoji">🇺🇸</span>
+                                    <div>
+                                        <h3 class="font-medium" id="gemini-model-name">Gemini 2.0</h3>
+                                        <div class="text-xs text-gray-400">Google</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="gemini-response" class="text-gray-300">
+                                Loading response...
+                            </p>
+                        </div>
                     </div>
                 </div>
                 
@@ -801,18 +824,21 @@
                 const claudeResponse = document.getElementById('claude-response');
                 const mistralResponse = document.getElementById('mistral-response');
                 const deepseekResponse = document.getElementById('deepseek-response');
+                const geminiResponse = document.getElementById('gemini-response');
 
                 // Get model name elements
                 const gptModelName = document.getElementById('gpt-model-name');
                 const claudeModelName = document.getElementById('claude-model-name');
                 const mistralModelName = document.getElementById('mistral-model-name');
                 const deepseekModelName = document.getElementById('deepseek-model-name');
+                const geminiModelName = document.getElementById('gemini-model-name');
 
                 // Get model containers
                 const gptContainer = document.querySelector('.model-openai');
                 const claudeContainer = document.querySelector('.model-claude');
                 const mistralContainer = document.querySelector('.model-mistral');
                 const deepseekContainer = document.querySelector('.model-deepseek');
+                const geminiContainer = document.querySelector('.model-gemini');
                 
                 const verdictBadge = document.getElementById('verdict-badge');
                 const confidenceLevel = document.getElementById('confidence-level');
@@ -954,7 +980,8 @@
                             'openai': 'GPT-5',
                             'anthropic': 'Claude Haiku',
                             'mistral': 'Mistral Medium',
-                            'deepseek': 'DeepSeek'
+                            'deepseek': 'DeepSeek',
+                            'gemini': 'Gemini 2.0'
                         };
 
                         // Update model name labels with nice names and tooltips
@@ -974,6 +1001,7 @@
                         updateModelDisplay('anthropic', claudeModelName);
                         updateModelDisplay('mistral', mistralModelName);
                         updateModelDisplay('deepseek', deepseekModelName);
+                        updateModelDisplay('gemini', geminiModelName);
 
                         const modelInfos = [];
 
@@ -1032,7 +1060,8 @@
                     claudeContainer.classList.add('hidden');
                     mistralContainer.classList.add('hidden');
                     deepseekContainer.classList.add('hidden');
-                    
+                    geminiContainer.classList.add('hidden');
+
                     // Make API request
                     fetch('/ask', {
                         method: 'POST',
@@ -1071,7 +1100,14 @@
                             deepseekResponse.textContent = data.responses['deepseek'].content;
                             deepseekResponse.classList.remove('text-red-400');
                         }
-                        
+
+                        // Handle Gemini if available
+                        if (data.responses['gemini'] && data.responses['gemini'].success) {
+                            geminiContainer.classList.remove('hidden');
+                            geminiResponse.textContent = data.responses['gemini'].content;
+                            geminiResponse.classList.remove('text-red-400');
+                        }
+
                         // Use the analysis data if available, otherwise calculate it client-side
                         if (data.analysis) {
                             updateVerdict(data.analysis);

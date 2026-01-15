@@ -29,6 +29,11 @@ const FALLBACK_CONFIG: FullModelConfig = {
     display_name: null,
     docs_url: 'https://api-docs.deepseek.com/models',
   },
+  gemini: {
+    id: 'gemini-2.0-flash-exp',
+    display_name: 'Gemini 2.0 Flash',
+    docs_url: 'https://ai.google.dev/gemini-api/docs',
+  },
 };
 
 /**
