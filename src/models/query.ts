@@ -281,13 +281,14 @@ export async function queryAllModels(
   prompt: string,
   env: Env
 ): Promise<Record<string, ModelResponse>> {
-  const [openaiResponse, anthropicResponse, mistralResponse, deepseekResponse, geminiResponse] = await Promise.all([
-    queryOpenAI(prompt, env),
-    queryAnthropic(prompt, env),
-    queryMistral(prompt, env),
-    queryDeepSeek(prompt, env),
-    queryGemini(prompt, env),
-  ]);
+  const [openaiResponse, anthropicResponse, mistralResponse, deepseekResponse, geminiResponse] =
+    await Promise.all([
+      queryOpenAI(prompt, env),
+      queryAnthropic(prompt, env),
+      queryMistral(prompt, env),
+      queryDeepSeek(prompt, env),
+      queryGemini(prompt, env),
+    ]);
 
   return {
     openai: openaiResponse,
