@@ -15,7 +15,7 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
   }
 
   try {
-    const body = (await request.json()) as any;
+    const body = (await request.json()) as { amount?: number };
     const amount = body.amount || 500; // Default $5.00 in cents
 
     if (amount < 100 || amount > 1000) {
@@ -26,7 +26,7 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     }
 
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-15.clover' as any,
+      apiVersion: '2025-12-15.clover' as Stripe.LatestApiVersion,
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -52,12 +52,13 @@ export async function handleCheckout(request: Request, env: Env): Promise<Respon
     return new Response(JSON.stringify({ id: session.id }), {
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in /create-checkout-session route:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        details: error.message,
+        details: message,
       }),
       {
         status: 500,

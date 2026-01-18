@@ -57,14 +57,17 @@ export async function loadModelConfig(env: Env): Promise<FullModelConfig> {
  * Get a value from a nested object using a path
  * Example: path = ['choices', 0, 'message', 'content']
  */
-export function getValueAtPath(obj: any, path: (string | number)[]): string {
-  let current = obj;
+export function getValueAtPath(
+  obj: Record<string, unknown> | unknown[],
+  path: (string | number)[]
+): string {
+  let current: unknown = obj;
   for (const key of path) {
     if (Array.isArray(current)) {
       current = current[Number(key)];
-    } else {
-      current = current[key];
+    } else if (current && typeof current === 'object') {
+      current = (current as Record<string, unknown>)[key];
     }
   }
-  return current;
+  return current as string;
 }

@@ -85,176 +85,244 @@ function detectPolicyLimitation(content: string): boolean {
   return policyPatterns.some(pattern => pattern.test(content));
 }
 
+// Uncertainty patterns that indicate factual uncertainty rather than policy limits
+const UNCERTAINTY_PATTERNS = [
+  'cannot be definitively answered',
+  'complex issue',
+  'not enough evidence',
+  'remains disputed',
+  'difficult to determine',
+  'would require more information',
+  'cannot be answered with a simple',
+  'insufficient evidence',
+  'uncertain',
+  'depends on',
+  'ambiguous',
+  'unclear',
+  'debated',
+  'controversial',
+];
+
 /**
- * Analyze responses from multiple models to determine verdict and confidence
+ * Check if content contains uncertainty markers
  */
-export function analyzeResponses(responses: Record<string, ModelResponse>): ConsensusAnalysis {
+function hasUncertainty(content: string): boolean {
+  const contentLower = content.toLowerCase();
+  return UNCERTAINTY_PATTERNS.some(pattern => contentLower.includes(pattern));
+}
+
+/**
+ * Check if content contains FALSE verdict (not negated)
+ */
+function hasFalseVerdict(content: string): boolean {
+  return (
+    content.includes('FALSE') && !content.includes('NOT FALSE') && !content.includes("ISN'T FALSE")
+  );
+}
+
+/**
+ * Check if content contains TRUE verdict (not negated)
+ */
+function hasTrueVerdict(content: string): boolean {
+  return (
+    content.includes('TRUE') && !content.includes('NOT TRUE') && !content.includes("ISN'T TRUE")
+  );
+}
+
+/**
+ * Extract classification from a single model response
+ */
+function classifyResponse(content: string): {
+  classification: Classification;
+  isUncertain: boolean;
+} {
+  if (detectRecusal(content)) {
+    return { classification: 'RECUSE', isUncertain: false };
+  }
+
+  if (detectPolicyLimitation(content)) {
+    return { classification: 'POLICY_LIMITED', isUncertain: false };
+  }
+
+  const contentUpper = content.toUpperCase();
+  const uncertain = hasUncertainty(content);
+
+  if (hasFalseVerdict(contentUpper)) {
+    return {
+      classification: uncertain ? 'UNCERTAIN' : 'FALSE',
+      isUncertain: uncertain,
+    };
+  }
+
+  if (hasTrueVerdict(contentUpper)) {
+    return {
+      classification: uncertain ? 'UNCERTAIN' : 'TRUE',
+      isUncertain: uncertain,
+    };
+  }
+
+  // Default to UNCERTAIN if no clear verdict
+  return { classification: 'UNCERTAIN', isUncertain: true };
+}
+
+/**
+ * Extract judgments from all model responses
+ */
+function extractJudgments(responses: Record<string, ModelResponse>): {
+  judgments: Record<string, Classification>;
+  policyLimited: string[];
+  uncertain: string[];
+} {
   const judgments: Record<string, Classification> = {};
-  const policyLimitedResponses: string[] = [];
-  const uncertainResponses: string[] = [];
+  const policyLimited: string[] = [];
+  const uncertain: string[] = [];
 
-  // Uncertainty patterns that indicate factual uncertainty rather than policy limits
-  const uncertaintyPatterns = [
-    'cannot be definitively answered',
-    'complex issue',
-    'not enough evidence',
-    'remains disputed',
-    'difficult to determine',
-    'would require more information',
-    'cannot be answered with a simple',
-    'insufficient evidence',
-    'uncertain',
-    'depends on',
-    'ambiguous',
-    'unclear',
-    'debated',
-    'controversial',
-  ];
-
-  // Extract judgments from each model response
   for (const [model, response] of Object.entries(responses)) {
     if (!response.success || !response.content) {
       continue;
     }
 
-    // Check for explicit opt-outs first
-    if (detectRecusal(response.content)) {
-      judgments[model] = 'RECUSE';
-      continue;
-    }
+    const { classification, isUncertain } = classifyResponse(response.content);
+    judgments[model] = classification;
 
-    if (detectPolicyLimitation(response.content)) {
-      judgments[model] = 'POLICY_LIMITED';
-      policyLimitedResponses.push(model);
-      continue;
-    }
-
-    const contentUpper = response.content.toUpperCase();
-    const contentLower = response.content.toLowerCase();
-
-    // Check for uncertainty indicators
-    const uncertain = uncertaintyPatterns.some(pattern => contentLower.includes(pattern));
-
-    // Extract explicit judgments
-    if (
-      contentUpper.includes('FALSE') &&
-      !contentUpper.includes('NOT FALSE') &&
-      !contentUpper.includes("ISN'T FALSE")
-    ) {
-      if (uncertain) {
-        judgments[model] = 'UNCERTAIN';
-        uncertainResponses.push(model);
-      } else {
-        judgments[model] = 'FALSE';
-      }
-    } else if (
-      contentUpper.includes('TRUE') &&
-      !contentUpper.includes('NOT TRUE') &&
-      !contentUpper.includes("ISN'T TRUE")
-    ) {
-      if (uncertain) {
-        judgments[model] = 'UNCERTAIN';
-        uncertainResponses.push(model);
-      } else {
-        judgments[model] = 'TRUE';
-      }
-    } else if (contentUpper.includes('UNCERTAIN') || uncertain) {
-      judgments[model] = 'UNCERTAIN';
-      uncertainResponses.push(model);
-    } else {
-      judgments[model] = 'UNCERTAIN';
-      uncertainResponses.push(model);
+    if (classification === 'POLICY_LIMITED') {
+      policyLimited.push(model);
+    } else if (isUncertain || classification === 'UNCERTAIN') {
+      uncertain.push(model);
     }
   }
 
-  // Count different judgments - exclude RECUSE and POLICY_LIMITED
+  return { judgments, policyLimited, uncertain };
+}
+
+/**
+ * Determine the majority verdict from judgment counts
+ */
+function determineMajorityVerdict(
+  judgmentCounts: Record<Classification, number>,
+  totalModels: number
+): Classification {
+  // If significant uncertainty, verdict is UNCERTAIN
+  if (judgmentCounts.UNCERTAIN >= totalModels / 3 || judgmentCounts.UNCERTAIN >= 2) {
+    return 'UNCERTAIN';
+  }
+
+  // If tie between TRUE and FALSE, use UNCERTAIN
+  if (judgmentCounts.TRUE === judgmentCounts.FALSE && judgmentCounts.TRUE > 0) {
+    return 'UNCERTAIN';
+  }
+
+  // Otherwise use the most common verdict
+  return Object.entries(judgmentCounts).reduce((a, b) =>
+    b[1] > a[1] ? b : a
+  )[0] as Classification;
+}
+
+interface ConfidenceParams {
+  majorityVerdict: Classification;
+  judgmentCounts: Record<Classification, number>;
+  totalModels: number;
+  policyLimited: string[];
+  judgments: Record<string, Classification>;
+}
+
+/**
+ * Calculate confidence percentage based on agreement and uncertainty
+ */
+function calculateConfidence(params: ConfidenceParams): number {
+  const { majorityVerdict, judgmentCounts, totalModels, policyLimited, judgments } = params;
+
+  if (totalModels === 0) {
+    return 0;
+  }
+
+  const agreementCount = judgmentCounts[majorityVerdict];
+
+  if (majorityVerdict === 'UNCERTAIN') {
+    return Math.min(70, (agreementCount / totalModels) * 100);
+  }
+
+  // For TRUE/FALSE verdicts, account for policy-limited responses
+  const policyAligned = policyLimited.filter(model => judgments[model] === majorityVerdict).length;
+  const nonPolicyTotal = totalModels - policyLimited.length;
+
+  let confidence: number;
+
+  if (nonPolicyTotal > 0) {
+    const baseConfidence = ((agreementCount - policyAligned) / nonPolicyTotal) * 100;
+    const policyBonus = (policyAligned / totalModels) * 20;
+    confidence = Math.min(100, baseConfidence + policyBonus);
+  } else {
+    confidence = (agreementCount / totalModels) * 90;
+  }
+
+  // Apply uncertainty penalty
+  if (judgmentCounts.UNCERTAIN > 0) {
+    const uncertaintyPenalty = (judgmentCounts.UNCERTAIN / totalModels) * 30;
+    confidence = Math.max(40, confidence - uncertaintyPenalty);
+  }
+
+  return confidence;
+}
+
+/**
+ * Determine confidence level text from percentage
+ */
+function getConfidenceLevel(confidence: number): ConfidenceLevel {
+  if (confidence >= 90) {
+    return 'VERY HIGH';
+  }
+  if (confidence >= 70) {
+    return 'HIGH';
+  }
+  if (confidence >= 50) {
+    return 'MEDIUM';
+  }
+  if (confidence >= 30) {
+    return 'LOW';
+  }
+  return 'VERY LOW';
+}
+
+/**
+ * Analyze responses from multiple models to determine verdict and confidence
+ */
+export function analyzeResponses(responses: Record<string, ModelResponse>): ConsensusAnalysis {
+  const { judgments, policyLimited, uncertain } = extractJudgments(responses);
+
+  // Count substantive judgments (exclude RECUSE and POLICY_LIMITED)
   const substantiveJudgments = Object.fromEntries(
     Object.entries(judgments).filter(([_, v]) => v !== 'RECUSE' && v !== 'POLICY_LIMITED')
   );
 
-  const judgmentCounts = { TRUE: 0, FALSE: 0, UNCERTAIN: 0 };
+  const judgmentCounts = {
+    TRUE: 0,
+    FALSE: 0,
+    UNCERTAIN: 0,
+    RECUSE: 0,
+    POLICY_LIMITED: 0,
+  };
   for (const judgment of Object.values(substantiveJudgments)) {
-    judgmentCounts[judgment as keyof typeof judgmentCounts]++;
+    judgmentCounts[judgment as Classification]++;
   }
 
-  // Determine the majority verdict
   const totalModels = Object.keys(substantiveJudgments).length;
-  let majorityVerdict: Classification;
-
-  if (judgmentCounts.UNCERTAIN >= totalModels / 3 || judgmentCounts.UNCERTAIN >= 2) {
-    majorityVerdict = 'UNCERTAIN';
-  } else {
-    // Otherwise use the most common verdict
-    majorityVerdict = Object.entries(judgmentCounts).reduce((a, b) =>
-      b[1] > a[1] ? b : a
-    )[0] as Classification;
-  }
-
-  // If there's a tie between TRUE and FALSE, use UNCERTAIN
-  if (judgmentCounts.TRUE === judgmentCounts.FALSE && judgmentCounts.TRUE > 0) {
-    majorityVerdict = 'UNCERTAIN';
-  }
-
-  // Calculate confidence percentage
-  let confidence = 0;
-
-  if (totalModels === 0) {
-    confidence = 0;
-  } else {
-    const agreementCount = judgmentCounts[majorityVerdict as keyof typeof judgmentCounts];
-
-    if (majorityVerdict === 'UNCERTAIN') {
-      // Cap confidence for UNCERTAIN verdicts
-      confidence = Math.min(70, (agreementCount / totalModels) * 100);
-    } else {
-      // For TRUE/FALSE verdicts
-      const policyAligned = policyLimitedResponses.filter(
-        model => judgments[model] === majorityVerdict
-      ).length;
-
-      const nonPolicyTotal = totalModels - policyLimitedResponses.length;
-
-      if (nonPolicyTotal > 0) {
-        // Give more weight to direct, non-policy-limited responses
-        const baseConfidence = ((agreementCount - policyAligned) / nonPolicyTotal) * 100;
-
-        // Add bonus for policy-limited responses that still align with majority
-        const policyBonus = (policyAligned / totalModels) * 20; // 20% max bonus
-
-        confidence = Math.min(100, baseConfidence + policyBonus);
-      } else {
-        // If all responses are policy-limited, just use agreement percentage
-        confidence = (agreementCount / totalModels) * 90; // Cap at 90% if all are policy-limited
-      }
-
-      // Reduce confidence if there are uncertain responses
-      if (judgmentCounts.UNCERTAIN > 0) {
-        const uncertaintyPenalty = (judgmentCounts.UNCERTAIN / totalModels) * 30;
-        confidence = Math.max(40, confidence - uncertaintyPenalty);
-      }
-    }
-  }
-
-  // Determine confidence level text
-  let confidenceLevel: ConfidenceLevel;
-  if (confidence >= 90) {
-    confidenceLevel = 'VERY HIGH';
-  } else if (confidence >= 70) {
-    confidenceLevel = 'HIGH';
-  } else if (confidence >= 50) {
-    confidenceLevel = 'MEDIUM';
-  } else if (confidence >= 30) {
-    confidenceLevel = 'LOW';
-  } else {
-    confidenceLevel = 'VERY LOW';
-  }
+  const majorityVerdict = determineMajorityVerdict(judgmentCounts, totalModels);
+  const confidence = calculateConfidence({
+    majorityVerdict,
+    judgmentCounts,
+    totalModels,
+    policyLimited,
+    judgments,
+  });
+  const confidenceLevel = getConfidenceLevel(confidence);
 
   return {
     verdict: majorityVerdict,
     confidence_percentage: Math.round(confidence),
     confidence_level: confidenceLevel,
     model_judgments: judgments,
-    policy_limited_responses: policyLimitedResponses,
-    uncertain_responses: uncertainResponses,
+    policy_limited_responses: policyLimited,
+    uncertain_responses: uncertain,
   };
 }

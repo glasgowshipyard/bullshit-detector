@@ -51,7 +51,7 @@ async function discoverProvider(
       return null;
     }
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { data?: APIModel[] };
     let models: APIModel[] = data.data || [];
 
     // Apply filter if provided
@@ -78,8 +78,9 @@ async function discoverProvider(
       display_name: displayName,
       docs_url: '', // Will be set later
     };
-  } catch (error: any) {
-    console.error(`Error discovering models for ${provider}: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error discovering models for ${provider}: ${message}`);
     return null;
   }
 }
@@ -158,7 +159,8 @@ export async function discoverLatestModels(env: Env): Promise<void> {
   try {
     await env.CACHE.put('model_config', JSON.stringify(configData));
     console.log('Model config updated with discovered models');
-  } catch (error: any) {
-    console.error(`Error saving model config: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error saving model config: ${message}`);
   }
 }

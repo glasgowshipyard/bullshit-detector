@@ -31,7 +31,9 @@ export async function updateCreditStatus(env: Env): Promise<void> {
       return;
     }
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as {
+      balance_infos?: Array<{ total_balance?: number; currency?: string }>;
+    };
 
     const status: CreditStatus = {
       last_updated: new Date().toISOString(),
@@ -42,7 +44,8 @@ export async function updateCreditStatus(env: Env): Promise<void> {
     // Save to Workers KV
     await env.CACHE.put('credit_status', JSON.stringify(status));
     console.log(`Credit status updated: ${status.balance} ${status.currency}`);
-  } catch (error: any) {
-    console.error(`Failed to update credit status: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Failed to update credit status: ${message}`);
   }
 }

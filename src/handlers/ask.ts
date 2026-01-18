@@ -17,7 +17,7 @@ export async function handleAsk(request: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const body = (await request.json()) as any;
+    const body = (await request.json()) as { query?: string };
     const query = body.query?.trim();
 
     if (!query) {
@@ -48,12 +48,13 @@ export async function handleAsk(request: Request, env: Env): Promise<Response> {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in /ask route:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        details: error.message,
+        details: message,
       }),
       {
         status: 500,

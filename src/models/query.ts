@@ -40,7 +40,7 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown>;
     const content = getValueAtPath(data, ['choices', 0, 'message', 'content']);
 
     return {
@@ -48,13 +48,14 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
       content: stripMarkdown(content),
       model: 'openai',
     };
-  } catch (error: any) {
-    console.error(`Error querying OpenAI: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error querying OpenAI: ${message}`);
     return {
       success: false,
       content: null,
       model: 'openai',
-      error: error.message || 'Unknown error',
+      error: message,
     };
   }
 }
@@ -93,7 +94,7 @@ async function queryAnthropic(prompt: string, env: Env): Promise<ModelResponse> 
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown>;
     const content = getValueAtPath(data, ['content', 0, 'text']);
 
     return {
@@ -101,13 +102,14 @@ async function queryAnthropic(prompt: string, env: Env): Promise<ModelResponse> 
       content: stripMarkdown(content),
       model: 'anthropic',
     };
-  } catch (error: any) {
-    console.error(`Error querying Anthropic: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error querying Anthropic: ${message}`);
     return {
       success: false,
       content: null,
       model: 'anthropic',
-      error: error.message || 'Unknown error',
+      error: message,
     };
   }
 }
@@ -146,7 +148,7 @@ async function queryMistral(prompt: string, env: Env): Promise<ModelResponse> {
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown>;
     const content = getValueAtPath(data, ['choices', 0, 'message', 'content']);
 
     return {
@@ -154,13 +156,14 @@ async function queryMistral(prompt: string, env: Env): Promise<ModelResponse> {
       content: stripMarkdown(content),
       model: 'mistral',
     };
-  } catch (error: any) {
-    console.error(`Error querying Mistral: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error querying Mistral: ${message}`);
     return {
       success: false,
       content: null,
       model: 'mistral',
-      error: error.message || 'Unknown error',
+      error: message,
     };
   }
 }
@@ -199,7 +202,7 @@ async function queryDeepSeek(prompt: string, env: Env): Promise<ModelResponse> {
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown>;
     const content = getValueAtPath(data, ['choices', 0, 'message', 'content']);
 
     return {
@@ -207,13 +210,14 @@ async function queryDeepSeek(prompt: string, env: Env): Promise<ModelResponse> {
       content: stripMarkdown(content),
       model: 'deepseek',
     };
-  } catch (error: any) {
-    console.error(`Error querying DeepSeek: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error querying DeepSeek: ${message}`);
     return {
       success: false,
       content: null,
       model: 'deepseek',
-      error: error.message || 'Unknown error',
+      error: message,
     };
   }
 }
@@ -255,7 +259,7 @@ async function queryGemini(prompt: string, env: Env): Promise<ModelResponse> {
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as Record<string, unknown>;
     const content = getValueAtPath(data, ['candidates', 0, 'content', 'parts', 0, 'text']);
 
     return {
@@ -263,13 +267,14 @@ async function queryGemini(prompt: string, env: Env): Promise<ModelResponse> {
       content: stripMarkdown(content),
       model: 'gemini',
     };
-  } catch (error: any) {
-    console.error(`Error querying Gemini: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Error querying Gemini: ${message}`);
     return {
       success: false,
       content: null,
       model: 'gemini',
-      error: error.message || 'Unknown error',
+      error: message,
     };
   }
 }

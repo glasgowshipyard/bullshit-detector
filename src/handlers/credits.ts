@@ -25,12 +25,13 @@ export async function handleCreditStatus(env: Env): Promise<Response> {
     return new Response(JSON.stringify(status), {
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in /api/credit-status route:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        details: error.message,
+        details: message,
       }),
       {
         status: 500,
