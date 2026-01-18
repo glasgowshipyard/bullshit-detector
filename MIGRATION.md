@@ -5,6 +5,7 @@ Complete migration from Heroku (Python/Flask) to Cloudflare (TypeScript/Workers 
 ## What Was Done
 
 ### Code Migration
+
 - **Backend:** Python/Flask (`app.py`, 633 lines) → TypeScript Workers (`src/worker.ts`)
 - **Preprocessing:** `preprocess.py` → `src/utils/preprocess.ts` (removed NLTK dependency, was disabled anyway)
 - **Consensus Logic:** `app.py:analyze_responses()` → `src/utils/consensus.ts`
@@ -14,6 +15,7 @@ Complete migration from Heroku (Python/Flask) to Cloudflare (TypeScript/Workers 
 - **Frontend:** `templates/index.html` → `public/index.html` (copied, not moved - Heroku still works)
 
 ### File Structure
+
 ```
 src/
 ├── worker.ts              # Main Workers entry point, all HTTP routes
@@ -48,6 +50,7 @@ archive/heroku/           # Original Python code (UNTOUCHED - rollback available
 ## Architecture Changes
 
 ### Heroku (Old)
+
 ```
 User → Heroku Dyno (Python/Flask)
        ├── Gunicorn (port 5000)
@@ -56,6 +59,7 @@ User → Heroku Dyno (Python/Flask)
 ```
 
 ### Cloudflare (New)
+
 ```
 User → Cloudflare Pages (static index.html)
        └── API calls to Cloudflare Worker
@@ -68,15 +72,15 @@ User → Cloudflare Pages (static index.html)
 
 ## Key Differences
 
-| Aspect | Heroku | Cloudflare |
-|--------|--------|-----------|
-| Language | Python 3.8+ | TypeScript |
-| Framework | Flask | Workers (native) |
-| Scheduled Tasks | APScheduler (in-process) | Cron Triggers (native) |
-| Storage | /tmp (ephemeral) | Workers KV (persistent) |
-| Preprocessing | NLTK (disabled) | Regex only |
-| Cold Start | ~10s | <100ms |
-| Cost | $7-25/month | $0/month |
+| Aspect          | Heroku                   | Cloudflare              |
+| --------------- | ------------------------ | ----------------------- |
+| Language        | Python 3.8+              | TypeScript              |
+| Framework       | Flask                    | Workers (native)        |
+| Scheduled Tasks | APScheduler (in-process) | Cron Triggers (native)  |
+| Storage         | /tmp (ephemeral)         | Workers KV (persistent) |
+| Preprocessing   | NLTK (disabled)          | Regex only              |
+| Cold Start      | ~10s                     | <100ms                  |
+| Cost            | $7-25/month              | $0/month                |
 
 ## Deployment Order (IMPORTANT)
 
@@ -92,17 +96,20 @@ User → Cloudflare Pages (static index.html)
 ## Rollback Plan
 
 ### If Deployment Fails
+
 - Heroku app still running at `archive/heroku/`
 - Original `templates/index.html` untouched
 - Can redeploy Heroku from archive: `git checkout HEAD~1 && git push heroku main`
 
 ### If Issues Found After Cutover
+
 1. Point DNS back to Heroku (5-60 min propagation)
 2. Scale up Heroku dyno if scaled down
 3. Debug Cloudflare offline
 4. Retry deployment after fixes
 
 ### Rollback Triggers
+
 - Error rate >5% over 1 hour
 - Any endpoint completely non-functional
 - Payment processing broken
@@ -111,6 +118,7 @@ User → Cloudflare Pages (static index.html)
 ## Testing Checklist
 
 ### Before DNS Cutover
+
 - [ ] Worker deployed successfully
 - [ ] All 5 secrets set (OPENAI_API_KEY, CLAUDE_API_KEY, MISTRAL_API_KEY, DEEPSEEK_API_KEY, STRIPE_SECRET_KEY)
 - [ ] KV namespace created and bound
@@ -125,6 +133,7 @@ User → Cloudflare Pages (static index.html)
 - [ ] Consensus algorithm matches Heroku results
 
 ### After DNS Cutover
+
 - [ ] Production domain loads frontend
 - [ ] Queries complete end-to-end
 - [ ] Payment flow works
@@ -136,24 +145,32 @@ User → Cloudflare Pages (static index.html)
 ## Known Issues & Solutions
 
 ### Issue: Frontend can't reach Worker API
+
 **Solution:** Either:
+
 - Add Worker routes to same domain via Cloudflare routing, OR
 - Update `public/index.html` API calls to point to Worker URL
 
 ### Issue: KV namespace not found
+
 **Solution:** Ensure `wrangler.toml` has correct KV namespace IDs from `wrangler kv:namespace create`
 
 ### Issue: Secrets not accessible
+
 **Solution:** Run `wrangler secret put <KEY>` for each required key
 
 ### Issue: Cron not running
+
 **Solution:** Check Cloudflare dashboard → Workers → Triggers, verify cron expression is correct
 
 ### Issue: TypeScript errors during deployment
+
 **Solution:** Run `npm run typecheck` locally first
 
 ### Issue: Worker timeout (30s limit)
+
 **Solution:** AI queries take 15-20s normally. If timing out:
+
 - Check API keys are valid
 - Verify network connectivity
 - Consider upgrading to Workers Paid ($5/month) for longer timeout
@@ -161,6 +178,7 @@ User → Cloudflare Pages (static index.html)
 ## Environment Variables
 
 ### Required Secrets (set via `wrangler secret put`)
+
 ```
 OPENAI_API_KEY          # OpenAI API key
 CLAUDE_API_KEY          # Anthropic API key
@@ -170,7 +188,9 @@ STRIPE_SECRET_KEY       # Stripe secret key
 ```
 
 ### Local Development (.dev.vars)
+
 Create `.dev.vars` in project root:
+
 ```
 OPENAI_API_KEY=sk-...
 CLAUDE_API_KEY=sk-ant-...
@@ -178,16 +198,19 @@ MISTRAL_API_KEY=...
 DEEPSEEK_API_KEY=...
 STRIPE_SECRET_KEY=sk_test_...
 ```
+
 **⚠️ Never commit this file - already in .gitignore**
 
 ## Monitoring
 
 ### View Worker Logs
+
 ```bash
 wrangler tail --format pretty
 ```
 
 ### Check KV Storage
+
 ```bash
 # List all keys
 wrangler kv:key list --namespace-id=YOUR_KV_ID
@@ -198,10 +221,12 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 ```
 
 ### Cloudflare Dashboard Metrics
+
 - Workers & Pages → bullshit-detector → Metrics
 - Monitor: Requests, Errors, CPU time, KV operations
 
 ### Expected Behavior
+
 - **Cron triggers:** Run daily at 00:00 UTC
 - **Model config updates:** Every 24 hours
 - **Credit status updates:** Every 24 hours
@@ -212,6 +237,7 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 ## Cost Monitoring
 
 ### Free Tier Limits
+
 - Workers requests: 100,000/day
 - KV reads: 100,000/day
 - KV writes: 1,000/day
@@ -219,6 +245,7 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 - Cron Triggers: 3 schedules
 
 ### Current Usage (Estimated)
+
 - Workers requests: ~1,000-5,000/day (depends on traffic)
 - KV reads: ~1,000-5,000/day (1 per /ask request)
 - KV writes: 2/day (cron tasks only)
@@ -230,12 +257,14 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 ## Performance Comparison
 
 ### Heroku
+
 - Cold start: 10-15 seconds
 - Request latency: 50-100ms (before AI calls)
 - AI query time: 15-20 seconds (parallel)
 - Total: ~16-21 seconds
 
 ### Cloudflare
+
 - Cold start: <100ms
 - Request latency: 10-20ms (edge)
 - AI query time: 15-20 seconds (parallel)
@@ -246,6 +275,7 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 ## Important Notes
 
 ### DO NOT
+
 - Delete `archive/heroku/` directory
 - Delete `templates/index.html` (Heroku still uses it)
 - Shut down Heroku immediately after Cloudflare deploy
@@ -253,6 +283,7 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 - Commit `.dev.vars` file
 
 ### DO
+
 - Keep Heroku running for at least 1 week after cutover
 - Monitor error rates daily for first week
 - Test payment flow in Stripe test mode before production
@@ -262,11 +293,13 @@ wrangler kv:key get --namespace-id=YOUR_KV_ID "credit_status"
 ## Support & Debugging
 
 ### Logs Location
+
 - **Worker logs:** `wrangler tail` or Cloudflare dashboard
 - **Build logs:** Wrangler CLI output during deployment
 - **Browser console:** Frontend errors and API responses
 
 ### Common Debug Commands
+
 ```bash
 # Test Worker locally
 wrangler dev
@@ -295,6 +328,7 @@ curl https://YOUR-WORKER.workers.dev/ask -X POST -H "Content-Type: application/j
 ## Success Criteria
 
 Migration is successful when:
+
 - [ ] All endpoints functional for 48 hours
 - [ ] Error rate <1%
 - [ ] Response times comparable to Heroku

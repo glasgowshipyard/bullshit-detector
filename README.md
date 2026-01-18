@@ -14,7 +14,7 @@ The Bullshit Detector addresses the modern evolution of Brandolini's Law - where
 
 - **Multi-model consensus**: Queries GPT-4o, Claude 3, Mistral, and DeepSeek for diverse perspectives
 - **Privacy-first**: No request logging or user tracking
-- **Confidence scoring**: Transparent uncertainty communication rather than false certainty  
+- **Confidence scoring**: Transparent uncertainty communication rather than false certainty
 - **Policy-aware**: Distinguishes between factual uncertainty and model policy limitations
 - **Real-time analysis**: Rapid verification with detailed reasoning from each model
 
@@ -29,7 +29,7 @@ The Bullshit Detector addresses the modern evolution of Brandolini's Law - where
 ### Verdict Types
 
 - **TRUE**: Claim supported by evidence and model consensus
-- **FALSE**: Claim contradicted by evidence and model consensus  
+- **FALSE**: Claim contradicted by evidence and model consensus
 - **UNCERTAIN**: Insufficient evidence or significant model disagreement
 - **RECUSE**: Unanswerable due to paradox or philosophical objection
 - **POLICY_LIMITED**: Model declined to evaluate due to safety constraints
@@ -45,18 +45,21 @@ The Bullshit Detector addresses the modern evolution of Brandolini's Law - where
 ## Technical Architecture
 
 ### Backend
+
 - **Cloudflare Workers** (TypeScript) with RESTful API
 - **Multi-provider AI integration** (OpenAI, Anthropic, Mistral, DeepSeek)
 - **Cron Triggers** for scheduled model metadata updates
 - **Workers KV** for persistent edge storage
 
 ### Frontend
+
 - **Cloudflare Pages** serving static HTML
 - **Responsive design** with dark/light mode support
 - **Real-time results** with animated loading states
 - **Tailwind CSS** for modern styling
 
 ### Key Files
+
 - `src/worker.ts` - Main Workers entry point and API endpoints
 - `src/utils/preprocess.ts` - Query preprocessing and normalization
 - `src/scheduled/discovery.ts` - Background model metadata collection
@@ -69,6 +72,7 @@ See [DEPLOY.md](DEPLOY.md) for Cloudflare deployment instructions.
 ## API Usage
 
 ### Evaluate a Claim
+
 ```bash
 curl -X POST https://bullshitdetector.ai/ask \
   -H "Content-Type: application/json" \
@@ -76,21 +80,35 @@ curl -X POST https://bullshitdetector.ai/ask \
 ```
 
 ### Response Format
+
 ```json
 {
   "query": "The moon landing was faked",
   "structured_query": "You are part of the Bullshit Detector...",
   "responses": {
-    "gpt-4o": {"success": true, "content": "FALSE. The moon landing...", "model": "gpt-4o"},
-    "claude-3": {"success": true, "content": "FALSE. The Apollo missions...", "model": "claude-3"},
-    "mistral": {"success": true, "content": "FALSE. There is overwhelming...", "model": "mistral"},
-    "deepseek": {"success": true, "content": "FALSE. The evidence for...", "model": "deepseek"}
+    "gpt-4o": { "success": true, "content": "FALSE. The moon landing...", "model": "gpt-4o" },
+    "claude-3": {
+      "success": true,
+      "content": "FALSE. The Apollo missions...",
+      "model": "claude-3"
+    },
+    "mistral": {
+      "success": true,
+      "content": "FALSE. There is overwhelming...",
+      "model": "mistral"
+    },
+    "deepseek": { "success": true, "content": "FALSE. The evidence for...", "model": "deepseek" }
   },
   "analysis": {
     "verdict": "FALSE",
     "confidence_percentage": 95,
     "confidence_level": "VERY HIGH",
-    "model_judgments": {"gpt-4o": "FALSE", "claude-3": "FALSE", "mistral": "FALSE", "deepseek": "FALSE"}
+    "model_judgments": {
+      "gpt-4o": "FALSE",
+      "claude-3": "FALSE",
+      "mistral": "FALSE",
+      "deepseek": "FALSE"
+    }
   }
 }
 ```
@@ -142,4 +160,4 @@ This project is open source. See the repository for license details.
 
 ---
 
-*"In an era of rampant misinformation, tools that help users quickly assess claims while maintaining appropriate epistemic humility are invaluable."*
+_"In an era of rampant misinformation, tools that help users quickly assess claims while maintaining appropriate epistemic humility are invaluable."_

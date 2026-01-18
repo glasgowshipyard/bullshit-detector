@@ -5,6 +5,7 @@ Simple step-by-step deployment instructions.
 ## Prerequisites
 
 You need a Cloudflare account with:
+
 - Workers enabled (free)
 - Pages enabled (free)
 
@@ -16,12 +17,14 @@ wrangler kv:namespace create "CACHE" --preview
 ```
 
 You'll get output like:
+
 ```
 { binding = "CACHE", id = "abc123..." }
 { binding = "CACHE", preview_id = "xyz789..." }
 ```
 
 Edit `wrangler.toml` and uncomment lines 10-13, adding your IDs:
+
 ```toml
 [[kv_namespaces]]
 binding = "CACHE"
@@ -48,11 +51,13 @@ wrangler deploy
 ```
 
 This deploys the API backend. You'll get a URL like:
+
 ```
 https://bullshit-detector.YOUR-SUBDOMAIN.workers.dev
 ```
 
 Test it:
+
 ```bash
 curl https://bullshit-detector.YOUR-SUBDOMAIN.workers.dev/api/model-metadata
 ```
@@ -64,6 +69,7 @@ wrangler pages deploy public --project-name=bullshit-detector
 ```
 
 This deploys the frontend. You'll get a URL like:
+
 ```
 https://bullshit-detector.pages.dev
 ```
@@ -82,6 +88,7 @@ If you add a custom domain (like `bullshitdetector.ai`) to Pages, you can use Cl
 4. Add custom route: `bullshitdetector.ai/api/*` and `bullshitdetector.ai/ask` and `bullshitdetector.ai/create-checkout-session`
 
 This way:
+
 - `bullshitdetector.ai/` → Pages (frontend)
 - `bullshitdetector.ai/ask` → Worker (API)
 - `bullshitdetector.ai/api/*` → Worker (API)
@@ -91,6 +98,7 @@ This way:
 If you want to keep them separate, edit `public/index.html`:
 
 Find the fetch calls (around lines 800-900) and update them:
+
 ```javascript
 // Add this at the top of the script section:
 const API_BASE = 'https://bullshit-detector.YOUR-SUBDOMAIN.workers.dev';
@@ -103,6 +111,7 @@ fetch(`${API_BASE}/create-checkout-session`, ...)
 ```
 
 Then redeploy Pages:
+
 ```bash
 wrangler pages deploy public --project-name=bullshit-detector
 ```
@@ -144,6 +153,7 @@ wrangler kv:key get --namespace-id=YOUR_ID "model_config"
 ## Rollback
 
 If anything goes wrong:
+
 1. Heroku app is still running in `archive/heroku/`
 2. DNS can be pointed back to Heroku
 3. All original Python code is preserved
@@ -167,6 +177,7 @@ If anything goes wrong:
 ---
 
 **Current Status:**
+
 - ✅ Worker code ready (`src/worker.ts`)
 - ✅ Frontend ready (`public/index.html`)
 - ⏳ Waiting for: KV namespace creation & deployment
