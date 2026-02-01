@@ -39,7 +39,7 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "@mistralai/mistralai": "^1.11.0",
     "openai": "^6.16.0",
-    "stripe": "^20.1.2"
+    "stripe": "^20.3.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
