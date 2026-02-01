@@ -33,7 +33,7 @@
     "prettier": "^3.8.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
-    "wrangler": "^4.58.0"
+    "wrangler": "^4.61.1"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
