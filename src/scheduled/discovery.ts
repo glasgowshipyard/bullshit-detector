@@ -37,7 +37,8 @@ async function discoverProvider(
   provider: string,
   endpoint: string,
   headers: Record<string, string>,
-  filter?: (model: APIModel) => boolean
+  filter?: (model: APIModel) => boolean,
+  transform?: (model: APIModel) => APIModel
 ): Promise<ModelConfig | null> {
   try {
     const response = await fetch(endpoint, {
@@ -57,6 +58,11 @@ async function discoverProvider(
     // Apply filter if provided
     if (filter) {
       models = models.filter(filter);
+    }
+
+    // Apply transform if provided
+    if (transform) {
+      models = models.map(transform);
     }
 
     if (models.length === 0) {
@@ -126,7 +132,8 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       'gemini',
       `https://generativelanguage.googleapis.com/v1beta/models?key=${env.GEMINI_API_KEY}`,
       {},
-      model => model.id.startsWith('models/gemini-') // Only Gemini models
+      model => model.id.startsWith('models/gemini-'), // Only Gemini models
+      model => ({ ...model, id: model.id.replace(/^models\//, '') }) // Strip "models/" prefix
     ),
   ]);
 
@@ -136,7 +143,7 @@ export async function discoverLatestModels(env: Env): Promise<void> {
     source: 'scheduler_auto_discovery',
     openai: openai
       ? { ...openai, docs_url: docsUrls.openai }
-      : { id: 'gpt-4o', display_name: null, docs_url: docsUrls.openai },
+      : { id: 'gpt-5-nano', display_name: 'GPT-5 Nano', docs_url: docsUrls.openai },
     anthropic: anthropic
       ? { ...anthropic, docs_url: docsUrls.anthropic }
       : {
@@ -152,7 +159,7 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       : { id: 'deepseek-chat', display_name: null, docs_url: docsUrls.deepseek },
     gemini: gemini
       ? { ...gemini, docs_url: docsUrls.gemini }
-      : { id: 'gemini-2.0-flash-exp', display_name: 'Gemini 2.0 Flash', docs_url: docsUrls.gemini },
+      : { id: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', docs_url: docsUrls.gemini },
   };
 
   // Save to Workers KV

@@ -15,7 +15,7 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
     const config = await loadModelConfig(env);
     const modelId = config.openai.id;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.OPENAI_API_KEY}`,
@@ -23,8 +23,7 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
       },
       body: JSON.stringify({
         model: modelId,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000,
+        input: prompt,
       }),
       signal: AbortSignal.timeout(30000), // 30s timeout
     });
@@ -41,7 +40,7 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
     }
 
     const data = (await response.json()) as Record<string, unknown>;
-    const content = getValueAtPath(data, ['choices', 0, 'message', 'content']);
+    const content = getValueAtPath(data, ['output', 0, 'content', 0, 'text']);
 
     return {
       success: true,

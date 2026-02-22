@@ -693,7 +693,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium" id="claude-model-name">Claude 3</h3>
+                                        <h3 class="font-medium" id="claude-model-name">Claude Sonnet 4.5</h3>
                                         <div class="text-xs text-gray-400">Anthropic</div>
                                     </div>
                                 </div>
@@ -750,7 +750,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium" id="gemini-model-name">Gemini 2.0</h3>
+                                        <h3 class="font-medium" id="gemini-model-name">Gemini 2.5 Flash</h3>
                                         <div class="text-xs text-gray-400">Google</div>
                                     </div>
                                 </div>
@@ -981,22 +981,22 @@
                 
                 // Update model info in footer
                 function updateModelInfo(data) {
-                    if (data && data.models) {
+                    if (data && (data.openai || data.anthropic || data.gemini)) {
                         // Nice names for each model
                         const niceNames = {
-                            'openai': 'GPT-5',
-                            'anthropic': 'Claude Haiku',
-                            'mistral': 'Mistral Medium',
+                            'openai': 'GPT-5 Nano',
+                            'anthropic': 'Claude Sonnet 4.5',
+                            'mistral': 'Mistral Large',
                             'deepseek': 'DeepSeek',
-                            'gemini': 'Gemini 2.0'
+                            'gemini': 'Gemini 2.5 Flash'
                         };
 
                         // Update model name labels with nice names and tooltips
                         const updateModelDisplay = (modelKey, nameElement) => {
-                            if (data.models[modelKey] && data.models[modelKey].id) {
+                            if (data[modelKey] && data[modelKey].id) {
                                 const niceName = niceNames[modelKey];
-                                const displayName = data.models[modelKey].display_name;
-                                const modelId = data.models[modelKey].id;
+                                const displayName = data[modelKey].display_name;
+                                const modelId = data[modelKey].id;
                                 const tooltip = displayName || modelId;
 
                                 // Create the display: "Nice Name ?"
@@ -1012,7 +1012,7 @@
 
                         const modelInfos = [];
 
-                        for (const [modelId, modelData] of Object.entries(data.models)) {
+                        for (const [modelId, modelData] of Object.entries(data)) {
                             if (modelData && modelData.docs_url && modelData.provider) {
                                 // Create clickable link to docs
                                 const link = document.createElement('a');
@@ -1083,6 +1083,12 @@
                         claimText.textContent = capitalizeFirstLetter(data.query);
                         
                         // Only show models with successful responses
+                        for (const [key, r] of Object.entries(data.responses)) {
+                            if (!r.success) {
+                                console.warn(`[bullshit-detector] ${key} failed:`, r.error);
+                            }
+                        }
+
                         if (data.responses['openai'] && data.responses['openai'].success) {
                             gptContainer.classList.remove('hidden');
                             gptResponse.textContent = data.responses['openai'].content;
@@ -1094,13 +1100,13 @@
                             claudeResponse.textContent = data.responses['anthropic'].content;
                             claudeResponse.classList.remove('text-red-400');
                         }
-                        
+
                         if (data.responses['mistral'] && data.responses['mistral'].success) {
                             mistralContainer.classList.remove('hidden');
                             mistralResponse.textContent = data.responses['mistral'].content;
                             mistralResponse.classList.remove('text-red-400');
                         }
-                        
+
                         // Handle DeepSeek if available
                         if (data.responses['deepseek'] && data.responses['deepseek'].success) {
                             deepseekContainer.classList.remove('hidden');

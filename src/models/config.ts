@@ -10,8 +10,8 @@ const FALLBACK_CONFIG: FullModelConfig = {
   last_updated: '2025-10-20T00:00:00Z',
   source: 'last_known_good_fallback',
   openai: {
-    id: 'gpt-4o',
-    display_name: null,
+    id: 'gpt-5-nano',
+    display_name: 'GPT-5 Nano',
     docs_url: 'https://platform.openai.com/docs/models',
   },
   anthropic: {
@@ -30,8 +30,8 @@ const FALLBACK_CONFIG: FullModelConfig = {
     docs_url: 'https://api-docs.deepseek.com/models',
   },
   gemini: {
-    id: 'gemini-2.0-flash-exp',
-    display_name: 'Gemini 2.0 Flash',
+    id: 'gemini-2.5-flash',
+    display_name: 'Gemini 2.5 Flash',
     docs_url: 'https://ai.google.dev/gemini-api/docs',
   },
 };
