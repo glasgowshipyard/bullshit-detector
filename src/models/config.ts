@@ -10,8 +10,8 @@ const FALLBACK_CONFIG: FullModelConfig = {
   last_updated: '2025-10-20T00:00:00Z',
   source: 'last_known_good_fallback',
   openai: {
-    id: 'gpt-5-nano',
-    display_name: 'GPT-5 Nano',
+    id: 'gpt-5.2-codex',
+    display_name: 'GPT-5',
     docs_url: 'https://platform.openai.com/docs/models',
   },
   anthropic: {

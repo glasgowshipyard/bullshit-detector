@@ -48,12 +48,12 @@ export function preprocessQuery(query: string): string {
   // Wrap in system prompt for consistent evaluation format
   const structuredQuery =
     `You are part of the Bullshit Detector multi-model consensus system. ` +
-    `Evaluate whether the following claim is TRUE or FALSE. Respond with one of: ` +
+    `Evaluate whether the following is TRUE or FALSE. The input may be phrased as a claim or a question — treat both the same way. Respond with one of: ` +
     `TRUE (the claim is factually correct), FALSE (the claim is factually incorrect), ` +
     `UNCERTAIN (insufficient evidence or unclear), RECUSE (unanswerable/paradoxical), ` +
     `or POLICY_LIMITED (cannot evaluate due to safety/policy constraints). ` +
     `Start your response with your verdict, then explain your reasoning.\n\n` +
-    `Claim: ${processed}`;
+    `Claim or question: ${processed}`;
 
   return structuredQuery;
 }
