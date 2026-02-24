@@ -982,11 +982,11 @@
                 // Update model info in footer
                 function updateModelInfo(data) {
                     if (data && (data.openai || data.anthropic || data.gemini)) {
-                        // Nice names for each model
+                        // Nice names for each model (fallback when API returns null or a description)
                         const niceNames = {
-                            'openai': 'GPT-5 Nano',
-                            'anthropic': 'Claude Sonnet 4.5',
-                            'mistral': 'Mistral Large',
+                            'openai': 'GPT-5',
+                            'anthropic': 'Claude Sonnet 4.6',
+                            'mistral': 'Mistral Medium',
                             'deepseek': 'DeepSeek',
                             'gemini': 'Gemini 2.5 Flash'
                         };
@@ -996,7 +996,9 @@
                             if (data[modelKey] && data[modelKey].id) {
                                 const displayName = data[modelKey].display_name;
                                 const modelId = data[modelKey].id;
-                                const label = displayName || niceNames[modelKey] || modelId;
+                                // Use display_name only if it's short enough to be a real name, not a description
+                                const useDisplayName = displayName && displayName.length < 40;
+                                const label = useDisplayName ? displayName : (niceNames[modelKey] || modelId);
 
                                 // Create the display: "Model Name ?"
                                 nameElement.innerHTML = `${label} <span class="text-xs text-gray-400 cursor-help" title="${modelId}">?</span>`;
