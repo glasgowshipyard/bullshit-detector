@@ -79,6 +79,22 @@ export default {
         response = await handleCreditStatus(env);
         break;
 
+      case '/api/refresh-models': {
+        const authHeader = request.headers.get('Authorization');
+        if (!env.ADMIN_SECRET || authHeader !== `Bearer ${env.ADMIN_SECRET}`) {
+          response = new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        } else {
+          await discoverLatestModels(env);
+          response = new Response(JSON.stringify({ success: true }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        break;
+      }
+
       case '/create-checkout-session':
         response = await handleCheckout(request, env);
         break;

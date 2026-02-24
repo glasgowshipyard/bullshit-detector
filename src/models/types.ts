@@ -32,5 +32,6 @@ export interface Env {
   DEEPSEEK_API_KEY: string;
   GEMINI_API_KEY: string;
   STRIPE_SECRET_KEY: string;
+  ADMIN_SECRET: string;
   CACHE: KVNamespace;
 }
