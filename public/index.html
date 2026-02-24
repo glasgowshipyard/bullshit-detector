@@ -674,7 +674,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium" id="gpt-model-name">GPT-4o</h3>
+                                        <h3 class="font-medium" id="gpt-model-name">ChatGPT</h3>
                                         <div class="text-xs text-gray-400">OpenAI</div>
                                     </div>
                                 </div>
@@ -693,7 +693,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium" id="claude-model-name">Claude Sonnet 4.5</h3>
+                                        <h3 class="font-medium" id="claude-model-name">Claude</h3>
                                         <div class="text-xs text-gray-400">Anthropic</div>
                                     </div>
                                 </div>
@@ -750,7 +750,7 @@
                                 <div class="flex items-center">
                                     <span class="flag-emoji">🇺🇸</span>
                                     <div>
-                                        <h3 class="font-medium" id="gemini-model-name">Gemini 2.5 Flash</h3>
+                                        <h3 class="font-medium" id="gemini-model-name">Gemini</h3>
                                         <div class="text-xs text-gray-400">Google</div>
                                     </div>
                                 </div>
@@ -982,13 +982,13 @@
                 // Update model info in footer
                 function updateModelInfo(data) {
                     if (data && (data.openai || data.anthropic || data.gemini)) {
-                        // Nice names for each model (fallback when API returns null or a description)
+                        // Generic brand names as fallback
                         const niceNames = {
-                            'openai': 'GPT-5',
-                            'anthropic': 'Claude Sonnet 4.6',
-                            'mistral': 'Mistral Medium',
+                            'openai': 'ChatGPT',
+                            'anthropic': 'Claude',
+                            'mistral': 'Mistral',
                             'deepseek': 'DeepSeek',
-                            'gemini': 'Gemini 2.5 Flash'
+                            'gemini': 'Gemini'
                         };
 
                         // Update model name labels with display name and tooltips
