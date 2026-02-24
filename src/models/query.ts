@@ -40,6 +40,7 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
     }
 
     const data = (await response.json()) as Record<string, unknown>;
+    console.log(`OpenAI using model: ${data['model']}`);
     const output = data['output'] as { type: string; content?: { type: string; text: string }[] }[];
     const messageItem = output?.find(item => item.type === 'message');
     const content = messageItem?.content?.find(c => c.type === 'output_text')?.text ?? '';
