@@ -111,7 +111,12 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       'openai',
       'https://api.openai.com/v1/models',
       { Authorization: `Bearer ${env.OPENAI_API_KEY}` },
-      model => model.id.startsWith('gpt-') // Only GPT models
+      model =>
+        model.id.startsWith('gpt-') &&
+        !model.id.includes('audio') &&
+        !model.id.includes('realtime') &&
+        !model.id.includes('vision') &&
+        !model.id.includes('instruct') // Only text chat GPT models
     ),
     discoverProvider(
       'anthropic',

@@ -991,16 +991,15 @@
                             'gemini': 'Gemini 2.5 Flash'
                         };
 
-                        // Update model name labels with nice names and tooltips
+                        // Update model name labels with display name and tooltips
                         const updateModelDisplay = (modelKey, nameElement) => {
                             if (data[modelKey] && data[modelKey].id) {
-                                const niceName = niceNames[modelKey];
                                 const displayName = data[modelKey].display_name;
                                 const modelId = data[modelKey].id;
-                                const tooltip = displayName || modelId;
+                                const label = displayName || niceNames[modelKey] || modelId;
 
-                                // Create the display: "Nice Name ?"
-                                nameElement.innerHTML = `${niceName} <span class="text-xs text-gray-400 cursor-help" title="${tooltip}">?</span>`;
+                                // Create the display: "Model Name ?"
+                                nameElement.innerHTML = `${label} <span class="text-xs text-gray-400 cursor-help" title="${modelId}">?</span>`;
                             }
                         };
 
@@ -1012,14 +1011,18 @@
 
                         const modelInfos = [];
 
-                        for (const [modelId, modelData] of Object.entries(data)) {
-                            if (modelData && modelData.docs_url && modelData.provider) {
+                        const providerNames = {
+                            'openai': 'OpenAI', 'anthropic': 'Anthropic',
+                            'mistral': 'Mistral', 'deepseek': 'DeepSeek', 'gemini': 'Google'
+                        };
+                        for (const [key, modelData] of Object.entries(data)) {
+                            if (modelData && modelData.docs_url && providerNames[key]) {
                                 // Create clickable link to docs
                                 const link = document.createElement('a');
                                 link.href = modelData.docs_url;
                                 link.target = '_blank';
                                 link.rel = 'noopener noreferrer';
-                                link.textContent = modelData.provider;
+                                link.textContent = providerNames[key];
                                 link.style.color = 'inherit';
                                 link.style.textDecoration = 'underline';
                                 link.style.cursor = 'pointer';
