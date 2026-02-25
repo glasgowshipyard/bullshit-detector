@@ -75,7 +75,8 @@ async function discoverProvider(
     const latest = sortedModels[0];
 
     // Extract display name if available
-    const displayName = latest.display_name || latest.description || null;
+    // Use display_name only — description fields contain marketing copy, not model names
+    const displayName = latest.display_name || null;
 
     console.log(`${provider} latest model: ${latest.id} (display: ${displayName})`);
 
