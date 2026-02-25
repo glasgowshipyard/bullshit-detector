@@ -1,13 +1,17 @@
 /**
  * Cloudflare Workers entry point
- * Main handler for all HTTP requests and scheduled tasks
+ * Main handler for all HTTP requests, scheduled tasks, and queue messages
  */
 
-import type { Env } from './models/types';
+import type { Env, VideoQueueMessage } from './models/types';
 import { handleAsk } from './handlers/ask';
 import { handleModelMetadata } from './handlers/metadata';
 import { handleCreditStatus } from './handlers/credits';
 import { handleCheckout } from './handlers/checkout';
+import { handleAskVideo } from './handlers/ask-video';
+import { handleVideoStatus } from './handlers/video-status';
+import { handleVideoResult } from './handlers/video-result';
+import { handleQueueMessage } from './handlers/queue-handler';
 import { discoverLatestModels } from './scheduled/discovery';
 import { updateCreditStatus } from './scheduled/credits';
 
@@ -60,7 +64,6 @@ export default {
     // Route handling
     switch (url.pathname) {
       case '/':
-        // Serve index.html from Pages (or return redirect to Pages deployment)
         response = new Response('Redirecting to Cloudflare Pages...', {
           status: 302,
           headers: { Location: '/' },
@@ -69,6 +72,10 @@ export default {
 
       case '/ask':
         response = await handleAsk(request, env);
+        break;
+
+      case '/ask-video':
+        response = await handleAskVideo(request, env);
         break;
 
       case '/api/model-metadata':
@@ -105,8 +112,18 @@ export default {
         });
         break;
 
-      default:
-        response = new Response('Not Found', { status: 404 });
+      default: {
+        const videoMatch = url.pathname.match(/^\/video\/([0-9a-f-]{36})$/i);
+        const statusMatch = url.pathname.match(/^\/api\/video-status\/([0-9a-f-]{36})$/i);
+
+        if (videoMatch) {
+          response = await handleVideoResult(videoMatch[1], env);
+        } else if (statusMatch) {
+          response = await handleVideoStatus(statusMatch[1], env);
+        } else {
+          response = new Response('Not Found', { status: 404 });
+        }
+      }
     }
 
     // Add CORS headers to response
@@ -121,15 +138,28 @@ export default {
   },
 
   /**
+   * Queue consumer — processes video analysis jobs message by message.
+   * Each message gets its own fresh execution context (no accumulated timeout).
+   */
+  async queue(batch: MessageBatch<VideoQueueMessage>, env: Env): Promise<void> {
+    for (const message of batch.messages) {
+      try {
+        await handleQueueMessage(message.body, env);
+        message.ack();
+      } catch {
+        // Nack so Cloudflare retries up to max_retries, then dead-letters
+        message.retry();
+      }
+    }
+  },
+
+  /**
    * Scheduled task handler (Cron Triggers)
    * Runs daily at 00:00 UTC
    */
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     console.log('Scheduled task triggered at:', new Date(event.scheduledTime).toISOString());
-
-    // Run model discovery and credit status update in parallel
     await Promise.all([discoverLatestModels(env), updateCreditStatus(env)]);
-
     console.log('Scheduled task completed');
   },
 };

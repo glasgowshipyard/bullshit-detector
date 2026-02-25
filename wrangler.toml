@@ -8,7 +8,9 @@ workers_dev = true
 # Routes for custom domain (if configured)
 routes = [
   "bullshitdetector.ai/ask",
+  "bullshitdetector.ai/ask-video",
   "bullshitdetector.ai/api/*",
+  "bullshitdetector.ai/video/*",
   "bullshitdetector.ai/create-checkout-session",
   "bullshitdetector.ai/success"
 ]
@@ -21,6 +23,18 @@ routes = [
 binding = "CACHE"
 id = "a3d2508ca6ea43118f4110e1197ec299"
 preview_id = "fa625075ce614e41946719fdef703e0d"
+
+# Queue for async video analysis jobs
+# Create with: wrangler queues create video-jobs
+[[queues.producers]]
+binding = "VIDEO_QUEUE"
+queue = "video-jobs"
+
+[[queues.consumers]]
+queue = "video-jobs"
+max_batch_size = 1
+max_batch_timeout = 0
+max_retries = 2
 
 # Cron triggers for scheduled tasks (model discovery + credit status)
 # Runs daily at 00:00 UTC

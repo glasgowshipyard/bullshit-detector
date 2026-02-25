@@ -282,26 +282,34 @@ async function queryGemini(prompt: string, env: Env): Promise<ModelResponse> {
 }
 
 /**
- * Query all AI providers in parallel
+ * Query all AI providers in parallel.
+ * Pass `exclude` to skip specific providers (e.g. to conserve Gemini quota for video extraction).
  */
 export async function queryAllModels(
   prompt: string,
-  env: Env
+  env: Env,
+  options: { exclude?: string[] } = {}
 ): Promise<Record<string, ModelResponse>> {
-  const [openaiResponse, anthropicResponse, mistralResponse, deepseekResponse, geminiResponse] =
-    await Promise.all([
-      queryOpenAI(prompt, env),
-      queryAnthropic(prompt, env),
-      queryMistral(prompt, env),
-      queryDeepSeek(prompt, env),
-      queryGemini(prompt, env),
-    ]);
+  const skip = new Set(options.exclude ?? []);
 
-  return {
-    openai: openaiResponse,
-    anthropic: anthropicResponse,
-    mistral: mistralResponse,
-    deepseek: deepseekResponse,
-    gemini: geminiResponse,
-  };
+  const providerFns: Record<string, () => Promise<ModelResponse>> = {};
+  if (!skip.has('openai')) {
+    providerFns.openai = () => queryOpenAI(prompt, env);
+  }
+  if (!skip.has('anthropic')) {
+    providerFns.anthropic = () => queryAnthropic(prompt, env);
+  }
+  if (!skip.has('mistral')) {
+    providerFns.mistral = () => queryMistral(prompt, env);
+  }
+  if (!skip.has('deepseek')) {
+    providerFns.deepseek = () => queryDeepSeek(prompt, env);
+  }
+  if (!skip.has('gemini')) {
+    providerFns.gemini = () => queryGemini(prompt, env);
+  }
+
+  const keys = Object.keys(providerFns);
+  const results = await Promise.all(keys.map(k => providerFns[k]()));
+  return Object.fromEntries(keys.map((k, i) => [k, results[i]]));
 }

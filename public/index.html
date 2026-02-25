@@ -564,13 +564,13 @@
                 <div class="card rounded-xl p-6 shadow-lg">
                     <form id="query-form" class="space-y-4" autocomplete="off">
                         <div>
-                            <label for="query" class="block text-sm font-medium text-gray-400 mb-2">Enter a claim to verify</label>
+                            <label for="query" class="block text-sm font-medium text-gray-400 mb-2">Enter a claim to verify, or paste a YouTube URL</label>
                             <div class="relative">
                                 <textarea 
                                 id="query" 
                                 name="query" 
                                 class="input-field w-full py-3 px-4 rounded-lg focus:outline-none resize-none overflow-hidden" 
-                                placeholder="Ex: Was the moon landing faked?"
+                                placeholder="Ex: Was the moon landing faked? — or paste a YouTube URL"
                                 autocomplete="off"
                                 required
                                 rows="1"
@@ -1057,16 +1057,50 @@
                 // Fetch metadata on load
                 fetchModelMetadata();
                 
+                // Detect YouTube URLs (11-char video ID after watch?v=, youtu.be/, embed/, etc.)
+                function detectYouTubeUrl(query) {
+                    const match = query.trim().match(
+                        /(?:https?:\/\/)?(?:www\.)?(?:youtube|youtu|youtube-nocookie)\.(?:com|be)\/(?:watch\?v=|embed\/|v\/|.+\?v=)?([^&=%?#\s]{11})/
+                    );
+                    return match ? match[1] : null;
+                }
+
                 queryForm.addEventListener('submit', function(e) {
                     e.preventDefault();
                     const query = document.getElementById('query').value;
-                    
+
                     if (query.trim() === '') return;
-                    
+
+                    // Route YouTube URLs to the async video analysis flow
+                    const videoId = detectYouTubeUrl(query);
+                    if (videoId) {
+                        loadingSection.classList.remove('hidden');
+                        resultsSection.classList.add('hidden');
+                        fetch(`${API_BASE}/ask-video`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query: query }),
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.job_id) {
+                                window.location.href = `${API_BASE}/video/${data.job_id}`;
+                            } else {
+                                loadingSection.classList.add('hidden');
+                                alert(data.error || 'Could not start video analysis.');
+                            }
+                        })
+                        .catch(() => {
+                            loadingSection.classList.add('hidden');
+                            alert('Error starting video analysis. Please try again.');
+                        });
+                        return;
+                    }
+
                     // Show loading
                     resultsSection.classList.add('hidden');
                     loadingSection.classList.remove('hidden');
-                    
+
                     // Reset responses and hide all model containers initially
                     gptContainer.classList.add('hidden');
                     claudeContainer.classList.add('hidden');
