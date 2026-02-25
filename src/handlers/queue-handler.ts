@@ -2,7 +2,7 @@
  * Cloudflare Queue consumer for video analysis jobs.
  *
  * Message flow:
- *   extract  → Gemini watches video, extracts claims, stores in KV,
+ *   extract  → Watches video via Gemini, extracts claims, stores in KV,
  *              publishes verify(0)
  *   verify N → Verifies claim N with 4 text models, updates KV,
  *              publishes verify(N+1) or marks job complete
@@ -247,9 +247,8 @@ async function handleVerify(jobId: string, claimIndex: number, env: Env): Promis
     return;
   }
 
-  // Verify this claim with 4 text models (Gemini excluded — saves quota for video extraction)
   const prompt = buildVerificationPrompt(claim);
-  const responses = await queryAllModels(prompt, env, { exclude: ['gemini'] });
+  const responses = await queryAllModels(prompt, env);
   const analysis = analyzeResponses(responses);
 
   // Write verified claim back into the claims array

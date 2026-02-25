@@ -55,7 +55,7 @@ function buildPage(jobId: string, job: VideoJob): string {
 function progressPage(jobId: string, job: VideoJob): string {
   const statusLabel: Record<string, string> = {
     pending: 'Initialising...',
-    extracting: 'Gemini is watching the video and extracting claims...',
+    extracting: 'Watching the video and extracting claims...',
     verifying: `Verifying claims with 5 AI models... (${job.claims_verified ?? 0} / ${job.claims_found ?? '?'})`,
   };
 
@@ -110,7 +110,7 @@ function progressPage(jobId: string, job: VideoJob): string {
 
               const labels = {
                 pending: 'Initialising...',
-                extracting: 'Gemini is watching the video and extracting claims...',
+                extracting: 'Watching the video and extracting claims...',
                 verifying: 'Verifying claims with 5 AI models... (' + (data.claims_verified || 0) + ' / ' + (data.claims_found || '?') + ')',
               };
               const el = document.getElementById('status-label');

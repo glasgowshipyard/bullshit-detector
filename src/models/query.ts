@@ -283,7 +283,7 @@ async function queryGemini(prompt: string, env: Env): Promise<ModelResponse> {
 
 /**
  * Query all AI providers in parallel.
- * Pass `exclude` to skip specific providers (e.g. to conserve Gemini quota for video extraction).
+ * Pass `exclude` to skip specific providers.
  */
 export async function queryAllModels(
   prompt: string,
