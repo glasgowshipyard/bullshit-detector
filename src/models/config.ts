@@ -7,16 +7,16 @@ import type { Env, FullModelConfig } from './types';
 
 // Fallback configuration (last known good)
 const FALLBACK_CONFIG: FullModelConfig = {
-  last_updated: '2025-10-20T00:00:00Z',
+  last_updated: '2026-02-25T00:00:00Z',
   source: 'last_known_good_fallback',
   openai: {
-    id: 'gpt-5.2-codex',
-    display_name: 'GPT-5',
+    id: 'gpt-4o',
+    display_name: null,
     docs_url: 'https://platform.openai.com/docs/models',
   },
   anthropic: {
-    id: 'claude-sonnet-4-5-20250929',
-    display_name: 'Claude Sonnet 4.5',
+    id: 'claude-sonnet-4-6',
+    display_name: 'Claude Sonnet 4.6',
     docs_url: 'https://docs.anthropic.com/about-claude/models/overview',
   },
   mistral: {
@@ -30,8 +30,8 @@ const FALLBACK_CONFIG: FullModelConfig = {
     docs_url: 'https://api-docs.deepseek.com/models',
   },
   gemini: {
-    id: 'gemini-2.5-flash',
-    display_name: 'Gemini 2.5 Flash',
+    id: 'gemini-3-flash-preview',
+    display_name: 'Gemini 3 Flash',
     docs_url: 'https://ai.google.dev/gemini-api/docs',
   },
 };

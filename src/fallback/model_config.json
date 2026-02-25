@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-10-20T00:00:00Z",
+  "last_updated": "2026-02-25T00:00:00Z",
   "source": "last_known_good_fallback",
   "openai": {
     "id": "gpt-4o",
@@ -7,8 +7,8 @@
     "docs_url": "https://platform.openai.com/docs/models"
   },
   "anthropic": {
-    "id": "claude-sonnet-4-5-20250929",
-    "display_name": "Claude Sonnet 4.5",
+    "id": "claude-sonnet-4-6",
+    "display_name": "Claude Sonnet 4.6",
     "docs_url": "https://docs.anthropic.com/about-claude/models/overview"
   },
   "mistral": {
@@ -22,8 +22,8 @@
     "docs_url": "https://api-docs.deepseek.com/models"
   },
   "gemini": {
-    "id": "gemini-2.0-flash-exp",
-    "display_name": "Gemini 2.0 Flash",
+    "id": "gemini-3-flash-preview",
+    "display_name": "Gemini 3 Flash",
     "docs_url": "https://ai.google.dev/gemini-api/docs"
   }
 }

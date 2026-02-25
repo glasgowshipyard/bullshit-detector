@@ -15,7 +15,7 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
     const config = await loadModelConfig(env);
     const modelId = config.openai.id;
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.OPENAI_API_KEY}`,
@@ -23,9 +23,9 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
       },
       body: JSON.stringify({
         model: modelId,
-        input: prompt,
+        messages: [{ role: 'user', content: prompt }],
       }),
-      signal: AbortSignal.timeout(30000), // 30s timeout
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
@@ -41,9 +41,8 @@ async function queryOpenAI(prompt: string, env: Env): Promise<ModelResponse> {
 
     const data = (await response.json()) as Record<string, unknown>;
     console.log(`OpenAI using model: ${data['model']}`);
-    const output = data['output'] as { type: string; content?: { type: string; text: string }[] }[];
-    const messageItem = output?.find(item => item.type === 'message');
-    const content = messageItem?.content?.find(c => c.type === 'output_text')?.text ?? '';
+    const content =
+      (data['choices'] as { message: { content: string } }[])?.[0]?.message?.content ?? '';
 
     return {
       success: true,
