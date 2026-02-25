@@ -116,7 +116,9 @@ export async function discoverLatestModels(env: Env): Promise<void> {
         !model.id.includes('audio') &&
         !model.id.includes('realtime') &&
         !model.id.includes('vision') &&
-        !model.id.includes('instruct') // Only text chat GPT models
+        !model.id.includes('instruct') &&
+        !model.id.includes('search') &&
+        !model.id.includes('preview') // Only stable text chat GPT models
     ),
     discoverProvider(
       'anthropic',
