@@ -55,6 +55,10 @@ async function discoverProvider(
     const data = (await response.json()) as { data?: APIModel[] };
     let models: APIModel[] = data.data || [];
 
+    if (provider === 'openai') {
+      console.log(`openai raw model ids: ${models.map(m => m.id).join(', ')}`);
+    }
+
     // Apply filter if provided
     if (filter) {
       models = models.filter(filter);
@@ -111,14 +115,9 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       'openai',
       'https://api.openai.com/v1/models',
       { Authorization: `Bearer ${env.OPENAI_API_KEY}` },
-      model =>
-        model.id.startsWith('gpt-') &&
-        !model.id.includes('audio') &&
-        !model.id.includes('realtime') &&
-        !model.id.includes('vision') &&
-        !model.id.includes('instruct') &&
-        !model.id.includes('search') &&
-        !model.id.includes('preview') // Only stable text chat GPT models
+      // OpenAI maintains -chat-latest aliases for Chat Completions production use.
+      // e.g. gpt-5.2-chat-latest, gpt-5-chat-latest. Newest by timestamp wins.
+      model => model.id.endsWith('-chat-latest')
     ),
     discoverProvider(
       'anthropic',
