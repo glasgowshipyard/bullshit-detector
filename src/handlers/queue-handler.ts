@@ -61,7 +61,7 @@ async function extractClaimsFromVideo(
   claimsLimit: number | null = 10
 ): Promise<{ video_summary: string; primary_topic: string; claims: VideoClaim[] } | null> {
   try {
-    const modelId = 'gemini-2.5-flash';
+    const modelId = 'gemini-3-flash-preview';
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${env.GEMINI_API_KEY}`,
       {
@@ -76,6 +76,9 @@ async function extractClaimsFromVideo(
               ],
             },
           ],
+          generationConfig: {
+            mediaResolution: 'MEDIA_RESOLUTION_LOW', // enables longer video support
+          },
         }),
         signal: AbortSignal.timeout(120000),
       }

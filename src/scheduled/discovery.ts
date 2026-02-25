@@ -161,7 +161,7 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       : { id: 'deepseek-chat', display_name: null, docs_url: docsUrls.deepseek },
     gemini: gemini
       ? { ...gemini, docs_url: docsUrls.gemini }
-      : { id: 'gemini-2.5-flash', display_name: 'Gemini 2.5 Flash', docs_url: docsUrls.gemini },
+      : { id: 'gemini-3-flash-preview', display_name: 'Gemini 3 Flash', docs_url: docsUrls.gemini },
   };
 
   // Save to Workers KV
