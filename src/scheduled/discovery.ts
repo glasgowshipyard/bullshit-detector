@@ -55,10 +55,6 @@ async function discoverProvider(
     const data = (await response.json()) as { data?: APIModel[] };
     let models: APIModel[] = data.data || [];
 
-    if (provider === 'openai') {
-      console.log(`openai raw model ids: ${models.map(m => m.id).join(', ')}`);
-    }
-
     // Apply filter if provided
     if (filter) {
       models = models.filter(filter);

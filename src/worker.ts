@@ -95,7 +95,8 @@ export default {
           });
         } else {
           await discoverLatestModels(env);
-          response = new Response(JSON.stringify({ success: true }), {
+          const updatedConfig = await env.CACHE.get('model_config', 'json');
+          response = new Response(JSON.stringify(updatedConfig), {
             headers: { 'Content-Type': 'application/json' },
           });
         }
