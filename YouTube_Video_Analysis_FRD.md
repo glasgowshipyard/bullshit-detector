@@ -1,4 +1,4 @@
-# YouTube Video Analysis — Feature Requirements Document
+# Bullshit Detector — Feature Requirements Document
 
 **Status:** MVP Live
 **Last Updated:** February 25, 2026
@@ -8,9 +8,9 @@
 
 ## Executive Summary
 
-Bullshit Detector can now accept YouTube URLs alongside text claims. Paste a YouTube link and the system automatically watches the video, extracts up to 10 factual claims, and verifies each one using a 4-model AI consensus. Results are served on a permanent shareable UUID URL.
+Bullshit Detector accepts YouTube URLs and text claims, automatically extracts verifiable factual claims, and verifies each one using a 5-model AI consensus. Results are served on a permanent shareable UUID URL.
 
-This document covers what is built, how it works, and the roadmap for the next phase: permanent D1 catalogue, user authentication, tiered access, and a public searchable archive.
+This document covers what is built, how it works, the v2.x roadmap (permanent D1 catalogue, user authentication, tiered access, public searchable archive), and the v3.x roadmap (multi-source analysis — Twitter/X, Reddit, news articles, and beyond).
 
 ---
 
@@ -29,7 +29,7 @@ This document covers what is built, how it works, and the roadmap for the next p
 
 **While processing:**
 
-- Spinner with live status label: "Gemini is watching the video..." → "Verifying claims with 4 AI models... (3 / 10)"
+- Spinner with live status label: "Watching the video and extracting claims..." → "Verifying claims with 5 AI models... (3 / 10)"
 - Video topic and summary appear as soon as Gemini completes extraction
 
 **When complete:**
@@ -109,8 +109,7 @@ POST /ask-video { url }
 
 [3] verify(N) message — queue-handler.ts (own execution context, ~7s each)
     - Reads claim N from KV
-    - Calls 4 text models in parallel: OpenAI, Anthropic, Mistral, DeepSeek
-      (Gemini excluded — quota reserved for video extraction only)
+    - Calls all 5 models in parallel: OpenAI, Anthropic, Mistral, DeepSeek, Gemini
     - analyzeResponses() → ConsensusAnalysis
     - Writes claim N verdict back to KV
     - If N < last: publishes { type: 'verify', jobId, claimIndex: N+1 }
@@ -125,9 +124,9 @@ GET /api/video-status/{uuid}
     - JSON polling endpoint: { status, claims_found, claims_verified, video_metadata, claims?, overall? }
 ```
 
-### Why Gemini Is Excluded from Verification
+### Why Gemini Now Participates in Verification
 
-Gemini's free tier is 5 RPM / 20 RPD. It is only called once per video (extraction). Using it for claim verification too would burn that quota immediately. The 4 text models (OpenAI, Anthropic, Mistral, DeepSeek) handle all verification.
+Initially Gemini was excluded from claim verification to conserve its 20 RPD free tier quota for video extraction. With Gemini 3, quota limits are significantly more generous. All 5 models now participate in verification for a stronger consensus signal.
 
 ### Queue Configuration (wrangler.toml)
 
@@ -308,10 +307,10 @@ This is more interesting than it sounds — AI model consensus on political or s
 
 ### Gemini
 
+- Model auto-discovered from API nightly via KV, currently `gemini-3-flash-preview`
 - Supports YouTube URLs natively via `fileData.fileUri` — no upload required
-- Supports up to ~2 hours of video
-- Free tier: 5 RPM, 20 RPD (Flash models)
-- One call per video for extraction — this is the only Gemini call in the pipeline
+- `MEDIA_RESOLUTION_LOW` set — extends effective video length significantly
+- One call per video for extraction; also participates in claim verification
 - Timeout: 120 seconds (set in extraction fetch call)
 
 ### Cloudflare Queues
@@ -376,6 +375,112 @@ D1 catalogue dedup dramatically reduces real costs — popular videos are served
 
 ---
 
-**Document Version:** 2.0
-**Previous Version:** 1.0 (February 21, 2026) — pre-implementation planning document
-**Status:** MVP live. Phase 2 planned.
+## 9. v3.x — Multi-Source Analysis
+
+The worst sources of bullshit are not limited to YouTube. v3.x extends the platform to analyse content from any URL — treating the input field as a universal fact-checking interface rather than a video-specific tool.
+
+### 9.1 Twitter / X Posts (via Nitter)
+
+**The idea:** Users paste a Twitter/X URL. The backend converts it to a Nitter URL, fetches the tweet content, and runs it through the full claim verification pipeline — without sending a single request to X.
+
+**Why Nitter:** Nitter is an open-source Twitter frontend that proxies content without authentication, tracking, or ad revenue for X. Using it as a backend relay is a deliberate architectural choice — we do not want to drive API traffic or engagement signals to a platform whose business model is amplifying the content we're fact-checking.
+
+**Implementation:**
+
+```
+POST /ask (Twitter/X URL detected)
+    ↓
+src/utils/twitter.ts
+    - Detect twitter.com or x.com status URL
+    - Extract tweet ID
+    - Convert to Nitter URL (e.g. nitter.net/user/status/ID)
+    ↓
+Fetch Nitter page
+    - Scrape tweet text, author handle, display name, timestamp
+    - Follow quote tweet if present (one level deep)
+    - No queue needed — tweet is just text, runs synchronously
+    ↓
+All 5 models evaluate in parallel
+    - Prompt: "Here is a tweet. Extract and evaluate any verifiable factual claims."
+    - Same verdict structure: TRUE / FALSE / UNCERTAIN / POLICY_LIMITED / RECUSE
+    ↓
+Results at /tweet/{uuid}
+    - Tweet text displayed verbatim with author attribution
+    - Claim cards with verdicts, same UI as video results
+```
+
+**Nitter instance resilience:** Public Nitter instances go down. Maintain a short priority list of instances (`nitter.net`, `nitter.privacydev.net`, `nitter.poast.org`) and retry on failure before returning an error.
+
+**Rate limiting:** Same IP-based rules as video analysis once that phase is implemented.
+
+**Dedup:** Cache by tweet ID with 24hr TTL (tweets don't change after posting).
+
+---
+
+### 9.2 Reddit Posts and Threads
+
+Reddit is a significant vector for claim propagation — particularly on politics, science, and health. Posts and top-level comments in threads are often stated as fact with no sourcing.
+
+**Approach:**
+
+- Detect `reddit.com` and `old.reddit.com` URLs
+- Use Reddit's own JSON API (`/r/sub/comments/id.json`) — no auth required, no third-party proxy needed
+- Extract post title, body text, and optionally top comments
+- Same 5-model verification pipeline
+
+**Privacy note:** Reddit's JSON API is public and unauthenticated. No account required, no tracking of the requester.
+
+---
+
+### 9.3 Generic Web Articles
+
+Any news article or webpage URL. The user pastes a link; we fetch and extract the article body, strip boilerplate, and run the text through claim extraction.
+
+**Approach:**
+
+- Detect non-YouTube, non-Twitter, non-Reddit URLs
+- Fetch the page, strip navigation/ads/footers using readability heuristics (similar to how read-mode works in browsers)
+- Extract main article text
+- Run through the same claim extraction and verification pipeline
+
+**Value:** Covers news articles, blog posts, press releases, government statements — any published text.
+
+**Challenge:** Paywalled content cannot be fetched. Return a clear error rather than a partial result.
+
+---
+
+### 9.4 The Bigger Picture
+
+Each new source type follows the same pattern:
+
+```
+URL detected → source-specific fetcher → clean text extracted → 5-model consensus → results page
+```
+
+The video pipeline (Gemini watching via fileUri) is just one implementation of the fetcher step. Text-based sources are simpler and cheaper — no Gemini extraction call needed, just direct model prompting.
+
+**Unified input field:** The frontend detects URL type automatically. Users don't need to know which pipeline runs — they paste a link, they get a verdict.
+
+**Long-term:** A catalogue that spans YouTube videos, political tweets, Reddit health claims, and news articles is a fundamentally different product from a single-source tool. The public archive (v2.x) becomes a cross-source searchable database of verified claims — categorised by source type, topic, author, and verdict.
+
+---
+
+## 10. Implementation Order (Full Roadmap)
+
+**v2.x (current phase):**
+
+1. D1 setup — permanent catalogue, schema migration
+2. Remove KV TTL from video results once D1 is source of truth
+3. IP rate limiting — hash + KV, 429 with signup prompt
+4. Auth — Clerk/Auth.js, Google + GitHub OAuth
+5. Free account tier — 5/day cap, saved history, JSON download
+6. Public archive — browsable catalogue with search
+7. Paid tier — re-evaluation, PDF, higher claim cap
+
+**v3.x (multi-source):** 8. Twitter/X via Nitter — `/ask` URL detection + Nitter fetch + text models 9. Reddit — JSON API fetch, post + top comments 10. Generic article URLs — readability extraction, any web content 11. Unified archive — cross-source search, claim clustering across source types
+
+---
+
+**Document Version:** 2.1
+**Previous Versions:** 2.0 (February 25, 2026), 1.0 (February 21, 2026 — pre-implementation planning)
+**Status:** MVP live. v2.x planned. v3.x designed.
