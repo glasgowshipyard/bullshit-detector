@@ -10,7 +10,7 @@
 
 Bullshit Detector accepts YouTube URLs and text claims, automatically extracts verifiable factual claims, and verifies each one using a 5-model AI consensus. Results are served on a permanent shareable UUID URL.
 
-This document covers what is built, how it works, the v2.x roadmap (permanent D1 catalogue, user authentication, tiered access, public searchable archive), and the v3.x roadmap (multi-source analysis — Twitter/X, Reddit, news articles, and beyond).
+This document covers what is built, how it works, the v2.x roadmap (permanent D1 catalogue, user authentication, tiered access, public searchable archive), and the v3.x roadmap (multi-source analysis — Twitter/X, news articles, and beyond).
 
 ---
 
@@ -417,28 +417,13 @@ Results at /tweet/{uuid}
 
 ---
 
-### 9.2 Reddit Posts and Threads
-
-Reddit is a significant vector for claim propagation — particularly on politics, science, and health. Posts and top-level comments in threads are often stated as fact with no sourcing.
-
-**Approach:**
-
-- Detect `reddit.com` and `old.reddit.com` URLs
-- Use Reddit's own JSON API (`/r/sub/comments/id.json`) — no auth required, no third-party proxy needed
-- Extract post title, body text, and optionally top comments
-- Same 5-model verification pipeline
-
-**Privacy note:** Reddit's JSON API is public and unauthenticated. No account required, no tracking of the requester.
-
----
-
-### 9.3 Generic Web Articles
+### 9.2 Generic Web Articles
 
 Any news article or webpage URL. The user pastes a link; we fetch and extract the article body, strip boilerplate, and run the text through claim extraction.
 
 **Approach:**
 
-- Detect non-YouTube, non-Twitter, non-Reddit URLs
+- Detect non-YouTube, non-Twitter URLs
 - Fetch the page, strip navigation/ads/footers using readability heuristics (similar to how read-mode works in browsers)
 - Extract main article text
 - Run through the same claim extraction and verification pipeline
@@ -449,7 +434,7 @@ Any news article or webpage URL. The user pastes a link; we fetch and extract th
 
 ---
 
-### 9.4 The Bigger Picture
+### 9.3 The Bigger Picture
 
 Each new source type follows the same pattern:
 
@@ -461,7 +446,7 @@ The video pipeline (Gemini watching via fileUri) is just one implementation of t
 
 **Unified input field:** The frontend detects URL type automatically. Users don't need to know which pipeline runs — they paste a link, they get a verdict.
 
-**Long-term:** A catalogue that spans YouTube videos, political tweets, Reddit health claims, and news articles is a fundamentally different product from a single-source tool. The public archive (v2.x) becomes a cross-source searchable database of verified claims — categorised by source type, topic, author, and verdict.
+**Long-term:** A catalogue that spans YouTube videos, political tweets, and news articles is a fundamentally different product from a single-source tool. The public archive (v2.x) becomes a cross-source searchable database of verified claims — categorised by source type, topic, author, and verdict.
 
 ---
 
@@ -477,7 +462,11 @@ The video pipeline (Gemini watching via fileUri) is just one implementation of t
 6. Public archive — browsable catalogue with search
 7. Paid tier — re-evaluation, PDF, higher claim cap
 
-**v3.x (multi-source):** 8. Twitter/X via Nitter — `/ask` URL detection + Nitter fetch + text models 9. Reddit — JSON API fetch, post + top comments 10. Generic article URLs — readability extraction, any web content 11. Unified archive — cross-source search, claim clustering across source types
+**v3.x (multi-source):**
+
+8. Twitter/X via Nitter — `/ask` URL detection + Nitter fetch + text models
+9. Generic article URLs — readability extraction, any web content
+10. Unified archive — cross-source search, claim clustering across source types
 
 ---
 
