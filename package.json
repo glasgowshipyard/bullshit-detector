@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
-    "@mistralai/mistralai": "^1.11.0",
+    "@mistralai/mistralai": "^1.14.1",
     "openai": "^6.16.0",
     "stripe": "^20.1.2"
   },
