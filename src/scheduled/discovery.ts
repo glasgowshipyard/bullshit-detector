@@ -125,9 +125,13 @@ export async function discoverLatestModels(env: Env): Promise<void> {
       },
       model => model.id.startsWith('claude-') // Only Claude models
     ),
-    discoverProvider('mistral', 'https://api.mistral.ai/v1/models', {
-      Authorization: `Bearer ${env.MISTRAL_API_KEY}`,
-    }),
+    discoverProvider(
+      'mistral',
+      'https://api.mistral.ai/v1/models',
+      { Authorization: `Bearer ${env.MISTRAL_API_KEY}` },
+      // Newest-by-timestamp alone picked Codestral (code model); restrict to the flagship line
+      model => model.id.startsWith('mistral-large')
+    ),
     discoverProvider('deepseek', 'https://api.deepseek.com/v1/models', {
       Authorization: `Bearer ${env.DEEPSEEK_API_KEY}`,
     }),
