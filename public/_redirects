@@ -1,0 +1,4 @@
+# This site moved to letsfindout.app. Cloudflare Pages answers every request with a
+# redirect there, without running any code, so the old domain costs no Worker requests.
+/ https://letsfindout.app/ 301
+/* https://letsfindout.app/ 301
